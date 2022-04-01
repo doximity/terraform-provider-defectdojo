@@ -3,10 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
+	dd "github.com/doximity/defect-dojo-client-go"
 )
 
 // provider satisfies the tfsdk.Provider interface and usually is included
@@ -15,9 +19,7 @@ type provider struct {
 	// client can contain the upstream provider SDK or HTTP client used to
 	// communicate with the upstream service. Resource and DataSource
 	// implementations can then make calls using this client.
-	//
-	// TODO: If appropriate, implement upstream provider SDK or HTTP client.
-	// client vendorsdk.ExampleClient
+	client *dd.ClientWithResponses
 
 	// configured is set to true at the end of the Configure method.
 	// This can be used in Resource and DataSource implementations to verify
@@ -32,7 +34,7 @@ type provider struct {
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	Example types.String `tfsdk:"example"`
+	BaseUrl types.String `tfsdk:"base_url"`
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -47,30 +49,47 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	// Configuration values are now available.
 	// if data.Example.Null { /* ... */ }
 
-	// If the upstream provider SDK or HTTP client requires configuration, such
-	// as authentication or logging, this is a great opportunity to do so.
+	// TODO, set these from provider configuration OR from env vars
+	// url := os.Getenv("DOJO_URI")
+	// token := os.Getenv("DOJO_APIKEY")
+	// password: 1Defectdojo@demo#appsec
+	url := data.BaseUrl.Value //"https://demo.defectdojo.org"
+	token := os.Getenv("DOJO_APIKEY")
+
+	tokenProvider, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("Token %s", token))
+	if err != nil {
+		panic(err)
+	}
+
+	client, err := dd.NewClientWithResponses(url, dd.WithRequestEditorFn(tokenProvider.Intercept))
+	if err != nil {
+		panic(err)
+	}
+
+	p.client = client
 
 	p.configured = true
 }
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"scaffolding_example": exampleResourceType{},
+		"defectdojo_product": productResourceType{},
 	}, nil
 }
 
 func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
 	return map[string]tfsdk.DataSourceType{
-		"scaffolding_example": exampleDataSourceType{},
+		"defectdojo_product": productDataSourceType{},
 	}, nil
 }
 
 func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"example": {
-				MarkdownDescription: "Example provider attribute",
+			"base_url": {
+				MarkdownDescription: "Base URL of the defectdojo installation",
 				Optional:            true,
+				Required:            false,
 				Type:                types.StringType,
 			},
 		},

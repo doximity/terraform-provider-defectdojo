@@ -38,7 +38,7 @@ func main() {
 		Debug: debug,
 
 		// TODO: Update this string with the published name of your provider.
-		Name: "registry.terraform.io/hashicorp/scaffolding",
+		Name: "registry.terraform.io/doximity/defectdojo",
 	}
 
 	err := tfsdk.Serve(context.Background(), provider.New(version), opts)

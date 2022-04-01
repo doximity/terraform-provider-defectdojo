@@ -12,8 +12,10 @@ import (
 // CLI command executed to create a provider server to which the CLI can
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"scaffolding": func() (tfprotov6.ProviderServer, error) {
-		return tfsdk.NewProtocol6Server(New("test")()), nil
+	"defectdojo": func() (tfprotov6.ProviderServer, error) {
+		provider := New("test")().(*provider)
+		server := tfsdk.NewProtocol6Server(provider)
+		return server, nil
 	},
 }
 
