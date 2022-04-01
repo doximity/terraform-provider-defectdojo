@@ -1,3 +1,3 @@
-provider "scaffolding" {
+provider "defectdojo" {
   # example configuration here
 }

@@ -2,22 +2,6 @@
 
 DefectDojo API Terraform Provider
 
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
-
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://www.terraform.io/docs/plugin/which-sdk.html) in the Terraform documentation for additional information._
-
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
-
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
-
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Learn](https://learn.hashicorp.com/collections/terraform/providers) platform. _Terraform Plugin Framework specific guides are titled accordingly._
-
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
-
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://www.terraform.io/docs/registry/providers/publishing.html) so that others can use it.
-
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 1.0
@@ -49,7 +33,50 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-Fill this in for each provider
+You can configure the provider via environment variables:
+```
+$ export DEFECTDOJO_BASEURL="https://demo.defectdojo.org"
+$ export DEFECTDOJO_APIKEY="my-api-key"
+```
+
+Or with a username/password:
+
+```
+$ export DEFECTDOJO_BASEURL="https://demo.defectdojo.org"
+$ export DEFECTDOJO_USERNAME="admin"
+$ export DEFECTDOJO_PASSWORD="ebgngrguvegrra"
+```
+
+Or in the terraform configuration:
+
+```hcl
+provider "defectdojo" {
+  base_url = "https://defectdojo.my-company.com"
+  api_key = var.dd_api_kdy # don't put your key in the code!
+}
+```
+
+```hcl
+provider "defectdojo" {
+  base_url = "https://defectdojo.my-company.com"
+  username = "admin"
+  password = var.dd_password # # don't put your password in the code!
+}
+```
+
+Start using resources:
+
+```
+data "defectdojo_product_type" "this" {
+  name     = "My Product Type"
+}
+
+resource "defectdojo_product" "this" {
+  name            = var.product_name
+  description     = "This product represents is named `${var.product_name}`"
+  product_type_id = data.defectdojo_product_type.this.id
+}
+```
 
 ## Developing the Provider
 
@@ -66,3 +93,22 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Releasing a new version
+
+Merge your changes to `master` and then push a version tag to master, like:
+
+```
+$ git checkout master
+$ git pull
+$ git tag v0.0.1
+$ git push --tags
+```
+
+## Contributing
+
+Pull requests are welcome. By contributing to this repository you are agreeing to the [Contributor License Agreement (CONTRIBUTING.md)](./CONTRIBUTING.md)
+
+## Licencse
+
+Licensed under the Apache v2 license. See [LICENSE.txt](./LICENSE.txt)
