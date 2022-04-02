@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 
 	dd "github.com/doximity/defect-dojo-client-go"
@@ -84,7 +85,10 @@ func (r productResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	})
 
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Error Creating Resource",
+			fmt.Sprintf("%s", err))
+		return
 	}
 
 	if apiResp.StatusCode() == 201 {
@@ -93,7 +97,13 @@ func (r productResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		data.Description = types.String{Value: apiResp.JSON201.Description}
 		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON201.ProdType)}
 	} else {
-		// ??
+		body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
+
+		resp.Diagnostics.AddError(
+			"API Error Creating Resource",
+			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
+				fmt.Sprintf("\n\nbody:\n\n%s", body),
+		)
 	}
 
 	// write logs using the tflog package
@@ -115,14 +125,25 @@ func (r productResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		return
 	}
 
+	if data.Id.Null {
+		resp.Diagnostics.AddError(
+			"Could not Retrieve Resource",
+			"The Id field was null but it is required to retrieve the product")
+	}
+
 	idNumber, err := strconv.Atoi(data.Id.Value)
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Could not Retrieve Resource",
+			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
 	}
 
 	apiResp, err := r.provider.client.ProductsRetrieveWithResponse(ctx, idNumber, &dd.ProductsRetrieveParams{})
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Error Retrieving Resource",
+			fmt.Sprintf("%s", err))
+		return
 	}
 
 	if apiResp.StatusCode() == 200 {
@@ -130,7 +151,13 @@ func (r productResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		data.Description = types.String{Value: apiResp.JSON200.Description}
 		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
 	} else {
-		// ??
+		body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
+
+		resp.Diagnostics.AddError(
+			"API Error Retrieving Resource",
+			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
+				fmt.Sprintf("\n\nbody:\n\n%+v", body),
+		)
 	}
 
 	diags = resp.State.Set(ctx, &data)
@@ -147,9 +174,17 @@ func (r productResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		return
 	}
 
+	if data.Id.Null {
+		resp.Diagnostics.AddError(
+			"Could not Update Resource",
+			"The Id field was null but it is required to retrieve the product")
+	}
+
 	idNumber, err := strconv.Atoi(data.Id.Value)
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Could not Update Resource",
+			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
 	}
 
 	apiResp, err := r.provider.client.ProductsUpdateWithResponse(ctx, idNumber, dd.ProductsUpdateJSONRequestBody{
@@ -159,7 +194,10 @@ func (r productResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	})
 
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Error Updating Resource",
+			fmt.Sprintf("%s", err))
+		return
 	}
 
 	if apiResp.StatusCode() == 200 {
@@ -168,7 +206,13 @@ func (r productResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		data.Description = types.String{Value: apiResp.JSON200.Description}
 		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
 	} else {
-		// ??
+		body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
+
+		resp.Diagnostics.AddError(
+			"API Error Updating Resource",
+			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
+				fmt.Sprintf("\n\nbody:\n\n%+v", body),
+		)
 	}
 
 	diags = resp.State.Set(ctx, &data)
@@ -185,20 +229,35 @@ func (r productResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 		return
 	}
 
+	if data.Id.Null {
+		resp.Diagnostics.AddError(
+			"Could not Delete Resource",
+			"The Id field was null but it is required to retrieve the product")
+	}
+
 	idNumber, err := strconv.Atoi(data.Id.Value)
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Could not Delete Resource",
+			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
 	}
 
 	apiResp, err := r.provider.client.ProductsDestroy(ctx, idNumber)
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Error Deleting Resource",
+			fmt.Sprintf("%s", err))
+		return
 	}
 
-	if apiResp.StatusCode == 204 {
-		// success
-	} else {
-		// ??
+	if apiResp.StatusCode != 204 {
+		body, _ := ioutil.ReadAll(apiResp.Body)
+
+		resp.Diagnostics.AddError(
+			"API Error Deleting Resource",
+			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode)+
+				fmt.Sprintf("\n\nbody:\n\n%+v", body),
+		)
 	}
 
 	resp.State.RemoveResource(ctx)
