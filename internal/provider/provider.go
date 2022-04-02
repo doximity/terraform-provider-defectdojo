@@ -50,11 +50,10 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	// if data.Example.Null { /* ... */ }
 
 	// TODO, set these from provider configuration OR from env vars
-	// url := os.Getenv("DOJO_URI")
-	// token := os.Getenv("DOJO_APIKEY")
-	// password: 1Defectdojo@demo#appsec
+	// url := os.Getenv("DEFECTDOJO_URI")
+	// token := os.Getenv("DEFECTDOJO_APIKEY")
 	url := data.BaseUrl.Value //"https://demo.defectdojo.org"
-	token := os.Getenv("DOJO_APIKEY")
+	token := os.Getenv("DEFECTDOJO_APIKEY")
 
 	tokenProvider, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("Token %s", token))
 	if err != nil {

@@ -87,10 +87,14 @@ func (r productResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		panic(err)
 	}
 
-	data.Id = types.String{Value: fmt.Sprint(apiResp.JSON201.Id)}
-	data.Name = types.String{Value: apiResp.JSON201.Name}
-	data.Description = types.String{Value: apiResp.JSON201.Description}
-	data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON201.ProdType)}
+	if apiResp.StatusCode() == 201 {
+		data.Id = types.String{Value: fmt.Sprint(apiResp.JSON201.Id)}
+		data.Name = types.String{Value: apiResp.JSON201.Name}
+		data.Description = types.String{Value: apiResp.JSON201.Description}
+		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON201.ProdType)}
+	} else {
+		// ??
+	}
 
 	// write logs using the tflog package
 	// see https://pkg.go.dev/github.com/hashicorp/terraform-plugin-log/tflog
@@ -117,14 +121,17 @@ func (r productResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	}
 
 	apiResp, err := r.provider.client.ProductsRetrieveWithResponse(ctx, idNumber, &dd.ProductsRetrieveParams{})
-
 	if err != nil {
 		panic(err)
 	}
 
-	data.Name = types.String{Value: apiResp.JSON200.Name}
-	data.Description = types.String{Value: apiResp.JSON200.Description}
-	data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
+	if apiResp.StatusCode() == 200 {
+		data.Name = types.String{Value: apiResp.JSON200.Name}
+		data.Description = types.String{Value: apiResp.JSON200.Description}
+		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
+	} else {
+		// ??
+	}
 
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -155,10 +162,14 @@ func (r productResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		panic(err)
 	}
 
-	data.Id = types.String{Value: fmt.Sprint(apiResp.JSON200.Id)}
-	data.Name = types.String{Value: apiResp.JSON200.Name}
-	data.Description = types.String{Value: apiResp.JSON200.Description}
-	data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
+	if apiResp.StatusCode() == 200 {
+		data.Id = types.String{Value: fmt.Sprint(apiResp.JSON200.Id)}
+		data.Name = types.String{Value: apiResp.JSON200.Name}
+		data.Description = types.String{Value: apiResp.JSON200.Description}
+		data.ProductTypeId = types.Int64{Value: int64(apiResp.JSON200.ProdType)}
+	} else {
+		// ??
+	}
 
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -179,9 +190,15 @@ func (r productResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 		panic(err)
 	}
 
-	_, err = r.provider.client.ProductsDestroy(ctx, idNumber)
+	apiResp, err := r.provider.client.ProductsDestroy(ctx, idNumber)
 	if err != nil {
 		panic(err)
+	}
+
+	if apiResp.StatusCode == 204 {
+		// success
+	} else {
+		// ??
 	}
 
 	resp.State.RemoveResource(ctx)
