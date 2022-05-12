@@ -8,15 +8,17 @@ import (
 )
 
 func TestAccProductResource(t *testing.T) {
+	name := fmt.Sprintf("dox-test-repo-%s", resource.UniqueId())
+	updatedName := fmt.Sprintf("dox-new-name-%s", resource.UniqueId())
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccProductResourceConfig("dox-test-repo"),
+				Config: testAccProductResourceConfig(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("defectdojo_product.test", "name", "dox-test-repo"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "name", name),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "description", "test"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "product_type_id", "1"),
 				),
@@ -29,9 +31,9 @@ func TestAccProductResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccProductResourceConfig("dox-new-name"),
+				Config: testAccProductResourceConfig(updatedName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("defectdojo_product.test", "name", "dox-new-name"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "name", updatedName),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -42,7 +44,7 @@ func TestAccProductResource(t *testing.T) {
 func testAccProductResourceConfig(name string) string {
 	return fmt.Sprintf(`
 provider "defectdojo" {
-  base_url = "https://demo.defectdojo.org"
+  base_url = "https://defectdojo.services-dev.dev.dox.pub"
 }
 resource "defectdojo_product" "test" {
   name = %[1]q

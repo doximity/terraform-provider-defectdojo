@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/deepmap/oapi-codegen v1.9.1
+	github.com/doximity/defect-dojo-client-go v0.0.0-20220401231254-0106e09960d1
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-framework v0.6.1
 	github.com/hashicorp/terraform-plugin-go v0.8.0
@@ -20,7 +21,6 @@ require (
 	github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/doximity/defect-dojo-client-go v0.0.0-20220401231254-0106e09960d1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/getkin/kin-openapi v0.94.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
