@@ -50,3 +50,14 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Releasing a new version
+
+Merge your changes to `master` and then push a version tag to master, like:
+
+```
+$ git checkout master
+$ git pull
+$ git tag v0.0.1
+$ git push --tags
+```
