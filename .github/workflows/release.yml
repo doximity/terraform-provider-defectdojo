@@ -34,13 +34,13 @@ jobs:
       # private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
       # secret. If you would rather own your own GPG handling, please fork this action
       # or use an alternative one for key handling.
-      - name: Import GPG key
-        id: import_gpg
-        uses: hashicorp/ghaction-import-gpg@v2.1.0
-        env:
-          # These secrets will need to be configured for the repository:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
+      # - name: Import GPG key
+      #   id: import_gpg
+      #   uses: hashicorp/ghaction-import-gpg@v2.1.0
+      #   env:
+      #     # These secrets will need to be configured for the repository:
+      #     GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      #     PASSPHRASE: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2.9.1
         with:
