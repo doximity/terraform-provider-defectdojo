@@ -41,6 +41,11 @@ jobs:
       #     # These secrets will need to be configured for the repository:
       #     GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       #     PASSPHRASE: ${{ secrets.PASSPHRASE }}
+      - name: set up github access
+        run: |
+          echo "machine github.com" > ~/.netrc
+          echo "  login doxbot" >> ~/.netrc
+          echo "  password ${{ secrets.GH_RO_TOKEN }}" >> ~/.netrc
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2.9.1
         with:
