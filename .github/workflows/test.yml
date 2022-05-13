@@ -29,11 +29,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - uses: actions/checkout@v3
-      - name: set up github access
-        run: |
-          echo "machine github.com" > ~/.netrc
-          echo "  login doxbot" >> ~/.netrc
-          echo "  password ${{ secrets.GH_RO_TOKEN }}" >> ~/.netrc
       - run: go mod download
       - run: go build -v .
 
@@ -44,11 +39,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - uses: actions/checkout@v3
-      - name: set up github access
-        run: |
-          echo "machine github.com" > ~/.netrc
-          echo "  login doxbot" >> ~/.netrc
-          echo "  password ${{ secrets.GH_RO_TOKEN }}" >> ~/.netrc
       - run: go generate ./...
       - name: git diff
         run: |
@@ -77,11 +67,6 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - uses: actions/checkout@v3
-      - name: set up github access
-        run: |
-          echo "machine github.com" > ~/.netrc
-          echo "  login doxbot" >> ~/.netrc
-          echo "  password ${{ secrets.GH_RO_TOKEN }}" >> ~/.netrc
       - run: go mod download
       - env:
           TF_ACC: "1"
