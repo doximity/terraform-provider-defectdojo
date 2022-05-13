@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"strconv"
 
 	dd "github.com/doximity/defect-dojo-client-go"
@@ -16,7 +16,7 @@ type productDataSourceType struct{}
 func (t productDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Example data source",
+		MarkdownDescription: "Data source for Defect Dojo Product",
 
 		Attributes: map[string]tfsdk.Attribute{
 			"name": {
@@ -68,23 +68,23 @@ func (d productDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 
-	log.Printf("got here")
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	log.Printf("got here")
-
 	idNumber, err := strconv.Atoi(data.Id.Value)
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Could not Retrieve Resource",
+			"The id field could not be parsed into an integer")
 	}
 
 	apiResp, err := d.provider.client.ProductsRetrieveWithResponse(ctx, idNumber, &dd.ProductsRetrieveParams{})
-
 	if err != nil {
-		panic(err)
+		resp.Diagnostics.AddError(
+			"Error Retrieving Resource",
+			fmt.Sprintf("%s", err))
+		return
 	}
 
 	data.Name = types.String{Value: apiResp.JSON200.Name}

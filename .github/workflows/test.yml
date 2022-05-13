@@ -86,6 +86,8 @@ jobs:
       - env:
           TF_ACC: "1"
           # api key from admin user (cows) at https://defectdojo.services-dev.dev.dox.pub/api/key-v2
-          DEFECTDOJO_APIKEY: ${{ secrets.DEFECTDOJO_APIKEY }}
-        run: go test -v -cover ./internal/provider/
+          DEFECTDOJO_ADMIN_PASSWORD: ${{ secrets.DEFECTDOJO_ADMIN_PASSWORD }}
+        run: |
+          export DEFECTDOJO_APIKEY=$(curl -X POST -H 'content-type: application/json' https://defectdojo.services-dev.dev.dox.pub/api/v2/api-token-auth/ -d "{\"username\": \"cows\", \"password\": \"$DEFECTDOJO_ADMIN_PASSWORD\"}" | jq -r ".token")
+          go test -v -cover ./internal/provider/
         timeout-minutes: 10

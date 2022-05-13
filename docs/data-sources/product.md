@@ -3,12 +3,12 @@
 page_title: "defectdojo_product Data Source - terraform-provider-defectdojo"
 subcategory: ""
 description: |-
-  Example data source
+  Data source for Defect Dojo Product
 ---
 
 # defectdojo_product (Data Source)
 
-Example data source
+Data source for Defect Dojo Product
 
 
 
