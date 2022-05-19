@@ -49,6 +49,10 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
+	if p.configured {
+		return
+	}
+
 	var (
 		url   string
 		token string

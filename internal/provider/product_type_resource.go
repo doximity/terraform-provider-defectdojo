@@ -118,9 +118,10 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 	}
 
 	if data.Id.Null {
-		resp.Diagnostics.AddError(
+		resp.Diagnostics.AddWarning(
 			"Could not Retrieve Resource",
 			"The Id field was null but it is required to retrieve the product type")
+		return
 	}
 
 	idNumber, err := strconv.Atoi(data.Id.Value)
@@ -128,6 +129,7 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
 			fmt.Sprintf("Error while parsing the Product Type ID from state: %s", err))
+		return
 	}
 
 	apiResp, err := r.provider.client.ProductTypesRetrieveWithResponse(ctx, idNumber, &dd.ProductTypesRetrieveParams{})
