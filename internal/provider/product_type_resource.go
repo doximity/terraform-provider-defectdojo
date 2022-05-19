@@ -96,6 +96,7 @@ func (r productTypeResource) Create(ctx context.Context, req tfsdk.CreateResourc
 			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
 				fmt.Sprintf("\n\nbody:\n\n%s", body),
 		)
+		return
 	}
 
 	// write logs using the tflog package
@@ -121,6 +122,7 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
 			"The Id field was null but it is required to retrieve the product type")
+		return
 	}
 
 	idNumber, err := strconv.Atoi(data.Id.Value)
@@ -128,6 +130,7 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
 			fmt.Sprintf("Error while parsing the Product Type ID from state: %s", err))
+		return
 	}
 
 	apiResp, err := r.provider.client.ProductTypesRetrieveWithResponse(ctx, idNumber, &dd.ProductTypesRetrieveParams{})
@@ -149,6 +152,7 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
 				fmt.Sprintf("\n\nbody:\n\n%+v", body),
 		)
+		return
 	}
 
 	diags = resp.State.Set(ctx, &data)
@@ -169,6 +173,7 @@ func (r productTypeResource) Update(ctx context.Context, req tfsdk.UpdateResourc
 		resp.Diagnostics.AddError(
 			"Could not Update Resource",
 			"The Id field was null but it is required to retrieve the product")
+		return
 	}
 
 	idNumber, err := strconv.Atoi(data.Id.Value)
@@ -176,6 +181,7 @@ func (r productTypeResource) Update(ctx context.Context, req tfsdk.UpdateResourc
 		resp.Diagnostics.AddError(
 			"Could not Update Resource",
 			fmt.Sprintf("Error while parsing the Product Type ID from state: %s", err))
+		return
 	}
 
 	apiResp, err := r.provider.client.ProductTypesUpdateWithResponse(ctx, idNumber, dd.ProductTypesUpdateJSONRequestBody{
@@ -202,6 +208,7 @@ func (r productTypeResource) Update(ctx context.Context, req tfsdk.UpdateResourc
 			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
 				fmt.Sprintf("\n\nbody:\n\n%+v", body),
 		)
+		return
 	}
 
 	diags = resp.State.Set(ctx, &data)
@@ -222,6 +229,7 @@ func (r productTypeResource) Delete(ctx context.Context, req tfsdk.DeleteResourc
 		resp.Diagnostics.AddError(
 			"Could not Delete Resource",
 			"The Id field was null but it is required to retrieve the product type")
+		return
 	}
 
 	idNumber, err := strconv.Atoi(data.Id.Value)
@@ -229,6 +237,7 @@ func (r productTypeResource) Delete(ctx context.Context, req tfsdk.DeleteResourc
 		resp.Diagnostics.AddError(
 			"Could not Delete Resource",
 			fmt.Sprintf("Error while parsing the Product Type ID from state: %s", err))
+		return
 	}
 
 	apiResp, err := r.provider.client.ProductTypesDestroy(ctx, idNumber)
@@ -247,6 +256,7 @@ func (r productTypeResource) Delete(ctx context.Context, req tfsdk.DeleteResourc
 			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode)+
 				fmt.Sprintf("\n\nbody:\n\n%+v", body),
 		)
+		return
 	}
 
 	resp.State.RemoveResource(ctx)

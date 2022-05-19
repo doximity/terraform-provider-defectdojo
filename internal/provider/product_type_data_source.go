@@ -99,11 +99,13 @@ func (d productTypeDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourc
 			resp.Diagnostics.AddError(
 				"Could not Retrieve Data Resource",
 				"No Product Types matched the given parameters.")
+			return
 		} else if *apiResp.JSON200.Count > 1 {
 			body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
 			resp.Diagnostics.AddError(
 				"Could not Retrieve Data Resource",
 				fmt.Sprintf("%d Product Types matched the given parameters.\n\nResponse:\n\n%s", *apiResp.JSON200.Count, body))
+			return
 		} else {
 			pt = (*apiResp.JSON200.Results)[0]
 
@@ -119,6 +121,7 @@ func (d productTypeDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourc
 			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
 				fmt.Sprintf("\n\nbody:\n\n%+v", body),
 		)
+		return
 	}
 
 	diags = resp.State.Set(ctx, &data)
