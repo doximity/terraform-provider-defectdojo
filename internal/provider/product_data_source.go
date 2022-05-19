@@ -77,6 +77,7 @@ func (d productDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
 			"The id field could not be parsed into an integer")
+		return
 	}
 
 	apiResp, err := d.provider.client.ProductsRetrieveWithResponse(ctx, idNumber, &dd.ProductsRetrieveParams{})
