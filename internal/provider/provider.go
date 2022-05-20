@@ -40,6 +40,48 @@ type providerData struct {
 	Password types.String `tfsdk:"password"`
 }
 
+func newClient(ctx context.Context, url string, token string, user string, pass string) (*dd.ClientWithResponses, error) {
+	// if we have no api key but we do have a user and password explicitly set,
+	// we can use the API to get the token dynamically instead.
+	if token == "" && user != "" && pass != "" {
+		tokenclient, err := dd.NewClientWithResponses(url)
+		if err != nil {
+			return nil, fmt.Errorf("Error instantiating the client. This should never happen.")
+		}
+
+		tokenResponse, err := tokenclient.ApiTokenAuthCreateWithResponse(ctx, dd.ApiTokenAuthCreateJSONRequestBody{
+			Username: user,
+			Password: pass,
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("Network error retrieving the token via the API: %s", err)
+		}
+
+		if tokenResponse.StatusCode() == 200 {
+			token = tokenResponse.JSON200.Token
+		} else {
+			return nil, fmt.Errorf("Error retrieving the api token via the API. Unexpected response code: %d", tokenResponse.StatusCode())
+		}
+	}
+
+	if token == "" {
+		return nil, fmt.Errorf("Could not determine the api key for the defectdojo service. No api_key value provided and no DEFECTDOJO_APIKEY environment variable.")
+	}
+
+	tokenProvider, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("Token %s", token))
+	if err != nil {
+		return nil, fmt.Errorf("Error instantiating the security provider. This should never happen.")
+	}
+
+	client, err := dd.NewClientWithResponses(url, dd.WithRequestEditorFn(tokenProvider.Intercept))
+	if err != nil {
+		return nil, fmt.Errorf("Error instantiating the client. This should never happen.")
+	}
+
+	return client, nil
+}
+
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	var data providerData
 	diags := req.Config.Get(ctx, &data)
@@ -92,64 +134,11 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		pass = os.Getenv("DEFECTDOJO_PASSWORD")
 	}
 
-	// if we have no api key but we do have a user and password explicitly set,
-	// we can use the API to get the token dynamically instead.
-	if token == "" && user != "" && pass != "" {
-		tokenclient, err := dd.NewClientWithResponses(url)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to configure provider",
-				"Error instantiating the client. This should never happen.",
-			)
-			return
-		}
-
-		tokenResponse, err := tokenclient.ApiTokenAuthCreateWithResponse(ctx, dd.ApiTokenAuthCreateJSONRequestBody{
-			Username: user,
-			Password: pass,
-		})
-
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to configure provider",
-				fmt.Sprintf("Network error retrieving the token via the API: %s", err),
-			)
-			return
-		}
-
-		if tokenResponse.StatusCode() == 200 {
-			token = tokenResponse.JSON200.Token
-		} else {
-			resp.Diagnostics.AddError(
-				"Unable to configure provider",
-				fmt.Sprintf("Error retrieving the api token via the API. Unexpected response code: %d", tokenResponse.StatusCode()),
-			)
-			return
-		}
-	}
-
-	if token == "" {
-		resp.Diagnostics.AddError(
-			"Unable to configure provider",
-			"Could not determine the api key for the defectdojo service. No api_key value provided and no DEFECTDOJO_APIKEY environment variable.",
-		)
-		return
-	}
-
-	tokenProvider, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("Token %s", token))
+	client, err := newClient(ctx, url, token, user, pass)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to configure provider",
-			"Error instantiating the security provider. This should never happen.",
-		)
-		return
-	}
-
-	client, err := dd.NewClientWithResponses(url, dd.WithRequestEditorFn(tokenProvider.Intercept))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to configure provider",
-			"Error instantiating the client. This should never happen.",
+			fmt.Sprintf("%s", err),
 		)
 		return
 	}
