@@ -144,6 +144,9 @@ func (r productTypeResource) Read(ctx context.Context, req tfsdk.ReadResourceReq
 	if apiResp.StatusCode() == 200 {
 		data.Name = types.String{Value: apiResp.JSON200.Name}
 		data.Description = types.String{Value: *apiResp.JSON200.Description}
+	} else if apiResp.StatusCode() == 404 {
+		resp.State.RemoveResource(ctx)
+		return
 	} else {
 		body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
 
