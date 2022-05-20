@@ -1,6 +1,6 @@
 # terraform-provider-defectdojo
 
-DefectDojo API Terraform Provider
+[DefectDojo API Terraform Provider](https://registry.terraform.io/providers/doximity/defectdojo)
 
 ## Requirements
 
