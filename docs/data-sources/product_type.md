@@ -3,12 +3,12 @@
 page_title: "defectdojo_product_type Data Source - terraform-provider-defectdojo"
 subcategory: ""
 description: |-
-  Data source for Defect Dojo Product Type
+  Data source for Defect Dojo Product Type. You can specify either the id or the name to look up the Product Type.
 ---
 
 # defectdojo_product_type (Data Source)
 
-Data source for Defect Dojo Product Type
+Data source for Defect Dojo Product Type. You can specify either the `id` or the `name` to look up the Product Type.
 
 
 

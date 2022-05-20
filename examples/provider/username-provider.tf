@@ -1,4 +1,5 @@
 provider "defectdojo" {
   base_url = "https://defectdojo.my-company.com"
-  api_key  = var.dd_api_key
+  username = "admin"
+  password = var.dd_password
 }
