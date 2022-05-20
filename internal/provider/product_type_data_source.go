@@ -17,7 +17,7 @@ type productTypeDataSourceType struct{}
 func (t productTypeDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Data source for Defect Dojo Product Type",
+		MarkdownDescription: "Data source for Defect Dojo Product Type. You can specify either the `id` or the `name` to look up the Product Type.",
 
 		Attributes: map[string]tfsdk.Attribute{
 			"name": {

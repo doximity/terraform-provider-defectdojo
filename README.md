@@ -52,7 +52,7 @@ Or in the terraform configuration:
 ```hcl
 provider "defectdojo" {
   base_url = "https://defectdojo.my-company.com"
-  api_key = var.dd_api_kdy # don't put your key in the code!
+  api_key = var.dd_api_key # don't put your key in the code!
 }
 ```
 
@@ -60,7 +60,7 @@ provider "defectdojo" {
 provider "defectdojo" {
   base_url = "https://defectdojo.my-company.com"
   username = "admin"
-  password = var.dd_password # # don't put your password in the code!
+  password = var.dd_password # don't put your password in the code!
 }
 ```
 
@@ -92,6 +92,12 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 
 ```shell
 make testacc
+```
+
+Run one test at a time:
+
+```shell
+TESTARGS="-run TestFunctionName" make testacc
 ```
 
 ## Releasing a new version
