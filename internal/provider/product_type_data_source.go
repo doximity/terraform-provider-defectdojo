@@ -22,7 +22,7 @@ func (t productTypeDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema,
 		Attributes: map[string]tfsdk.Attribute{
 			"name": {
 				MarkdownDescription: "The name of the Product Type",
-				Computed:            true,
+				Optional:            true,
 				Type:                types.StringType,
 			},
 			"description": {
@@ -33,7 +33,7 @@ func (t productTypeDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema,
 			"id": {
 				MarkdownDescription: "Identifier",
 				Type:                types.StringType,
-				Computed:            true,
+				Optional:            true,
 			},
 		},
 	}, nil

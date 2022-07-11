@@ -3,7 +3,7 @@ package provider
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
 
@@ -13,9 +13,9 @@ import (
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"defectdojo": func() (tfprotov6.ProviderServer, error) {
-		provider := New("test")().(*provider)
-		server := tfsdk.NewProtocol6Server(provider)
-		return server, nil
+		provider := New("test")()
+		server, err := providerserver.NewProtocol6WithError(provider)()
+		return server, err
 	},
 }
 
