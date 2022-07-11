@@ -37,7 +37,7 @@ func (t productDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 			"id": {
 				MarkdownDescription: "Identifier",
 				Type:                types.StringType,
-				Computed:            true,
+				Optional:            true,
 			},
 		},
 	}, nil
