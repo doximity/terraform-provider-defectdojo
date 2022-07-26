@@ -145,6 +145,96 @@ type jiraProductConfigurationResourceData struct {
 	Id                                   types.String `tfsdk:"id"`
 }
 
+func (d *jiraProductConfigurationResourceData) populate(jiraProject *dd.JIRAProject) {
+	d.Id = types.String{Value: fmt.Sprint(jiraProject.Id)}
+
+	if jiraProject.Product != nil {
+		d.Product = types.String{Value: fmt.Sprint(*jiraProject.Product)}
+	}
+	if jiraProject.Engagement != nil {
+		d.Engagement = types.String{Value: fmt.Sprint(*jiraProject.Engagement)}
+	}
+	if jiraProject.JiraInstance != nil {
+		d.JiraInstance = types.String{Value: fmt.Sprint(*jiraProject.JiraInstance)}
+	}
+	if jiraProject.RiskAcceptanceExpirationNotification != nil {
+		d.RiskAcceptanceExpirationNotification = types.Bool{Value: *jiraProject.RiskAcceptanceExpirationNotification}
+	}
+	if jiraProject.ProductJiraSlaNotification != nil {
+		d.ProductJiraSlaNotification = types.Bool{Value: *jiraProject.ProductJiraSlaNotification}
+	}
+	if jiraProject.PushNotes != nil {
+		d.PushNotes = types.Bool{Value: *jiraProject.PushNotes}
+	}
+	if jiraProject.EnableEngagementEpicMapping != nil {
+		d.EnableEngagementEpicMapping = types.Bool{Value: *jiraProject.EnableEngagementEpicMapping}
+	}
+	if jiraProject.PushAllIssues != nil {
+		d.PushAllIssues = types.Bool{Value: *jiraProject.PushAllIssues}
+	}
+	if jiraProject.IssueTemplateDir != nil {
+		d.IssueTemplateDir = types.String{Value: *jiraProject.IssueTemplateDir}
+	}
+	if jiraProject.ProjectKey != nil {
+		d.ProjectKey = types.String{Value: *jiraProject.ProjectKey}
+	}
+}
+
+func (d *jiraProductConfigurationResourceData) jiraProject(diags *diag.Diagnostics) (*dd.JIRAProject, error) {
+	var productIdNumber, engagementIdNumber, jiraInstanceIdNumber int
+	var err error
+
+	if !d.Product.IsNull() {
+		productIdNumber, err = strconv.Atoi(d.Product.Value)
+		if err != nil {
+			diags.AddError(
+				"Could not Create Resource",
+				fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
+			return nil, err
+		}
+	}
+	if !d.Engagement.IsNull() {
+		engagementIdNumber, err = strconv.Atoi(d.Engagement.Value)
+		if err != nil {
+			diags.AddError(
+				"Could not Create Resource",
+				fmt.Sprintf("Error while parsing the Engagement ID from state: %s", err))
+			return nil, err
+		}
+	}
+	if !d.JiraInstance.IsNull() {
+		jiraInstanceIdNumber, err = strconv.Atoi(d.JiraInstance.Value)
+		if err != nil {
+			diags.AddError(
+				"Could not Create Resource",
+				fmt.Sprintf("Error while parsing the Jira Instance ID from state: %s", err))
+			return nil, err
+		}
+	}
+
+	ret := dd.JIRAProject{
+		RiskAcceptanceExpirationNotification: ref.Of(d.RiskAcceptanceExpirationNotification.Value),
+		ProductJiraSlaNotification:           ref.Of(d.ProductJiraSlaNotification.Value),
+		PushNotes:                            ref.Of(d.PushNotes.Value),
+		EnableEngagementEpicMapping:          ref.Of(d.EnableEngagementEpicMapping.Value),
+		PushAllIssues:                        ref.Of(d.PushAllIssues.Value),
+		IssueTemplateDir:                     ref.Of(d.IssueTemplateDir.Value),
+		ProjectKey:                           ref.Of(d.ProjectKey.Value),
+	}
+
+	if productIdNumber != 0 {
+		ret.Product = ref.Of(productIdNumber)
+	}
+	if engagementIdNumber != 0 {
+		ret.Engagement = ref.Of(engagementIdNumber)
+	}
+	if jiraInstanceIdNumber != 0 {
+		ret.JiraInstance = ref.Of(jiraInstanceIdNumber)
+	}
+
+	return &ret, nil
+}
+
 type jiraProductConfigurationResource struct {
 	provider provider
 }
@@ -159,56 +249,11 @@ func (r jiraProductConfigurationResource) Create(ctx context.Context, req tfsdk.
 		return
 	}
 
-	var productIdNumber, engagementIdNumber, jiraInstanceIdNumber int
-	var err error
-	if !data.Product.IsNull() {
-		productIdNumber, err = strconv.Atoi(data.Product.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-			return
-		}
+	jiraProject, err := data.jiraProject(&resp.Diagnostics)
+	if err != nil {
+		return
 	}
-	if !data.Engagement.IsNull() {
-		engagementIdNumber, err = strconv.Atoi(data.Engagement.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Engagement ID from state: %s", err))
-			return
-		}
-	}
-	if !data.JiraInstance.IsNull() {
-		jiraInstanceIdNumber, err = strconv.Atoi(data.JiraInstance.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Jira Instance ID from state: %s", err))
-			return
-		}
-	}
-
-	reqBody := dd.JiraProductConfigurationsCreateJSONRequestBody{
-		RiskAcceptanceExpirationNotification: ref.Of(data.RiskAcceptanceExpirationNotification.Value),
-		ProductJiraSlaNotification:           ref.Of(data.ProductJiraSlaNotification.Value),
-		PushNotes:                            ref.Of(data.PushNotes.Value),
-		EnableEngagementEpicMapping:          ref.Of(data.EnableEngagementEpicMapping.Value),
-		PushAllIssues:                        ref.Of(data.PushAllIssues.Value),
-		IssueTemplateDir:                     ref.Of(data.IssueTemplateDir.Value),
-		ProjectKey:                           ref.Of(data.ProjectKey.Value),
-	}
-
-	if productIdNumber != 0 {
-		reqBody.Product = ref.Of(productIdNumber)
-	}
-	if engagementIdNumber != 0 {
-		reqBody.Engagement = ref.Of(engagementIdNumber)
-	}
-	if jiraInstanceIdNumber != 0 {
-		reqBody.JiraInstance = ref.Of(jiraInstanceIdNumber)
-	}
-
+	reqBody := dd.JiraProductConfigurationsCreateJSONRequestBody(*jiraProject)
 	apiResp, err := r.provider.client.JiraProductConfigurationsCreateWithResponse(ctx, reqBody)
 
 	if err != nil {
@@ -219,38 +264,8 @@ func (r jiraProductConfigurationResource) Create(ctx context.Context, req tfsdk.
 	}
 
 	if apiResp.StatusCode() == 201 {
-		data.Id = types.String{Value: fmt.Sprint(apiResp.JSON201.Id)}
 
-		if apiResp.JSON201.Product != nil {
-			data.Product = types.String{Value: fmt.Sprint(*apiResp.JSON201.Product)}
-		}
-		if apiResp.JSON201.Engagement != nil {
-			data.Engagement = types.String{Value: fmt.Sprint(*apiResp.JSON201.Engagement)}
-		}
-		if apiResp.JSON201.JiraInstance != nil {
-			data.JiraInstance = types.String{Value: fmt.Sprint(*apiResp.JSON201.JiraInstance)}
-		}
-		if apiResp.JSON201.RiskAcceptanceExpirationNotification != nil {
-			data.RiskAcceptanceExpirationNotification = types.Bool{Value: *apiResp.JSON201.RiskAcceptanceExpirationNotification}
-		}
-		if apiResp.JSON201.ProductJiraSlaNotification != nil {
-			data.ProductJiraSlaNotification = types.Bool{Value: *apiResp.JSON201.ProductJiraSlaNotification}
-		}
-		if apiResp.JSON201.PushNotes != nil {
-			data.PushNotes = types.Bool{Value: *apiResp.JSON201.PushNotes}
-		}
-		if apiResp.JSON201.EnableEngagementEpicMapping != nil {
-			data.EnableEngagementEpicMapping = types.Bool{Value: *apiResp.JSON201.EnableEngagementEpicMapping}
-		}
-		if apiResp.JSON201.PushAllIssues != nil {
-			data.PushAllIssues = types.Bool{Value: *apiResp.JSON201.PushAllIssues}
-		}
-		if apiResp.JSON201.IssueTemplateDir != nil {
-			data.IssueTemplateDir = types.String{Value: *apiResp.JSON201.IssueTemplateDir}
-		}
-		if apiResp.JSON201.ProjectKey != nil {
-			data.ProjectKey = types.String{Value: *apiResp.JSON201.ProjectKey}
-		}
+		data.populate(apiResp.JSON201)
 	} else {
 		resp.Diagnostics.AddError(
 			"API Error Creating Resource",
@@ -300,36 +315,7 @@ func (r jiraProductConfigurationResource) Read(ctx context.Context, req tfsdk.Re
 	}
 
 	if apiResp.StatusCode() == 200 {
-		if apiResp.JSON200.Product != nil {
-			data.Product = types.String{Value: fmt.Sprint(*apiResp.JSON200.Product)}
-		}
-		if apiResp.JSON200.Engagement != nil {
-			data.Engagement = types.String{Value: fmt.Sprint(*apiResp.JSON200.Engagement)}
-		}
-		if apiResp.JSON200.JiraInstance != nil {
-			data.JiraInstance = types.String{Value: fmt.Sprint(*apiResp.JSON200.JiraInstance)}
-		}
-		if apiResp.JSON200.RiskAcceptanceExpirationNotification != nil {
-			data.RiskAcceptanceExpirationNotification = types.Bool{Value: *apiResp.JSON200.RiskAcceptanceExpirationNotification}
-		}
-		if apiResp.JSON200.ProductJiraSlaNotification != nil {
-			data.ProductJiraSlaNotification = types.Bool{Value: *apiResp.JSON200.ProductJiraSlaNotification}
-		}
-		if apiResp.JSON200.PushNotes != nil {
-			data.PushNotes = types.Bool{Value: *apiResp.JSON200.PushNotes}
-		}
-		if apiResp.JSON200.EnableEngagementEpicMapping != nil {
-			data.EnableEngagementEpicMapping = types.Bool{Value: *apiResp.JSON200.EnableEngagementEpicMapping}
-		}
-		if apiResp.JSON200.PushAllIssues != nil {
-			data.PushAllIssues = types.Bool{Value: *apiResp.JSON200.PushAllIssues}
-		}
-		if apiResp.JSON200.IssueTemplateDir != nil {
-			data.IssueTemplateDir = types.String{Value: *apiResp.JSON200.IssueTemplateDir}
-		}
-		if apiResp.JSON200.ProjectKey != nil {
-			data.ProjectKey = types.String{Value: *apiResp.JSON200.ProjectKey}
-		}
+		data.populate(apiResp.JSON200)
 	} else if apiResp.StatusCode() == 404 {
 		resp.State.RemoveResource(ctx)
 		return
@@ -371,55 +357,8 @@ func (r jiraProductConfigurationResource) Update(ctx context.Context, req tfsdk.
 		return
 	}
 
-	var productIdNumber, engagementIdNumber, jiraInstanceIdNumber int
-	if !data.Product.IsNull() {
-		productIdNumber, err = strconv.Atoi(data.Product.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Update Resource",
-				fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-			return
-		}
-	}
-	if !data.Engagement.IsNull() {
-		engagementIdNumber, err = strconv.Atoi(data.Engagement.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Update Resource",
-				fmt.Sprintf("Error while parsing the Engagement ID from state: %s", err))
-			return
-		}
-	}
-	if !data.JiraInstance.IsNull() {
-		jiraInstanceIdNumber, err = strconv.Atoi(data.JiraInstance.Value)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Could not Update Resource",
-				fmt.Sprintf("Error while parsing the Jira Instance ID from state: %s", err))
-			return
-		}
-	}
-
-	reqBody := dd.JiraProductConfigurationsUpdateJSONRequestBody{
-		RiskAcceptanceExpirationNotification: ref.Of(data.RiskAcceptanceExpirationNotification.Value),
-		ProductJiraSlaNotification:           ref.Of(data.ProductJiraSlaNotification.Value),
-		PushNotes:                            ref.Of(data.PushNotes.Value),
-		EnableEngagementEpicMapping:          ref.Of(data.EnableEngagementEpicMapping.Value),
-		PushAllIssues:                        ref.Of(data.PushAllIssues.Value),
-		IssueTemplateDir:                     ref.Of(data.IssueTemplateDir.Value),
-		ProjectKey:                           ref.Of(data.ProjectKey.Value),
-	}
-
-	if productIdNumber != 0 {
-		reqBody.Product = ref.Of(productIdNumber)
-	}
-	if engagementIdNumber != 0 {
-		reqBody.Engagement = ref.Of(engagementIdNumber)
-	}
-	if jiraInstanceIdNumber != 0 {
-		reqBody.JiraInstance = ref.Of(jiraInstanceIdNumber)
-	}
-
+	jiraProject, err := data.jiraProject(&resp.Diagnostics)
+	reqBody := dd.JiraProductConfigurationsUpdateJSONRequestBody(*jiraProject)
 	apiResp, err := r.provider.client.JiraProductConfigurationsUpdateWithResponse(ctx, idNumber, reqBody)
 
 	if err != nil {
@@ -430,37 +369,7 @@ func (r jiraProductConfigurationResource) Update(ctx context.Context, req tfsdk.
 	}
 
 	if apiResp.StatusCode() == 200 {
-		data.Id = types.String{Value: fmt.Sprint(apiResp.JSON200.Id)}
-		if apiResp.JSON200.Product != nil {
-			data.Product = types.String{Value: fmt.Sprint(*apiResp.JSON200.Product)}
-		}
-		if apiResp.JSON200.Engagement != nil {
-			data.Engagement = types.String{Value: fmt.Sprint(*apiResp.JSON200.Engagement)}
-		}
-		if apiResp.JSON200.JiraInstance != nil {
-			data.JiraInstance = types.String{Value: fmt.Sprint(*apiResp.JSON200.JiraInstance)}
-		}
-		if apiResp.JSON200.RiskAcceptanceExpirationNotification != nil {
-			data.RiskAcceptanceExpirationNotification = types.Bool{Value: *apiResp.JSON200.RiskAcceptanceExpirationNotification}
-		}
-		if apiResp.JSON200.ProductJiraSlaNotification != nil {
-			data.ProductJiraSlaNotification = types.Bool{Value: *apiResp.JSON200.ProductJiraSlaNotification}
-		}
-		if apiResp.JSON200.PushNotes != nil {
-			data.PushNotes = types.Bool{Value: *apiResp.JSON200.PushNotes}
-		}
-		if apiResp.JSON200.EnableEngagementEpicMapping != nil {
-			data.EnableEngagementEpicMapping = types.Bool{Value: *apiResp.JSON200.EnableEngagementEpicMapping}
-		}
-		if apiResp.JSON200.PushAllIssues != nil {
-			data.PushAllIssues = types.Bool{Value: *apiResp.JSON200.PushAllIssues}
-		}
-		if apiResp.JSON200.IssueTemplateDir != nil {
-			data.IssueTemplateDir = types.String{Value: *apiResp.JSON200.IssueTemplateDir}
-		}
-		if apiResp.JSON200.ProjectKey != nil {
-			data.ProjectKey = types.String{Value: *apiResp.JSON200.ProjectKey}
-		}
+		data.populate(apiResp.JSON200)
 	} else {
 		resp.Diagnostics.AddError(
 			"API Error Updating Resource",
