@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -84,6 +85,32 @@ func TestAccJiraProductConfigurationResourceDeleteDrift(t *testing.T) {
 			// Delete testing automatically occurs in TestCase
 		},
 	})
+}
+
+func TestAccJiraProductConfigurationResourceInvalid(t *testing.T) {
+	name := fmt.Sprintf("dox-delete-%s", resource.UniqueId())
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				ExpectError: regexp.MustCompile(`Invalid\s+Resource`),
+				Config:      testAccInvalidJiraProductConfigurationResourceConfig(name),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccInvalidJiraProductConfigurationResourceConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_jira_product_configuration" "test" {
+  project_key = %[1]q
+}
+`, name)
 }
 
 func testAccJiraProductConfigurationResourceConfig(productname string, name string) string {

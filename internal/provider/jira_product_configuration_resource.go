@@ -101,7 +101,7 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 
 			"product_id": {
 				MarkdownDescription: "The ID of the Product to configure",
-				Required:            true,
+				Optional:            true,
 				Type:                types.StringType,
 			},
 
@@ -237,6 +237,16 @@ func (d *jiraProductConfigurationResourceData) jiraProject(diags *diag.Diagnosti
 
 type jiraProductConfigurationResource struct {
 	provider provider
+}
+
+func (r jiraProductConfigurationResource) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
+	var productId types.String
+	req.Config.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("product_id"), &productId)
+	var engagementId types.String
+	req.Config.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("engagement_id"), &engagementId)
+	if productId.IsNull() && engagementId.IsNull() {
+		resp.Diagnostics.AddError("Invalid Resource", "The jira_product_configuration resource is invalid. Either product_id or engagement_id must be set.")
+	}
 }
 
 func (r jiraProductConfigurationResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
