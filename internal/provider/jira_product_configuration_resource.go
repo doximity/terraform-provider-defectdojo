@@ -100,7 +100,7 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 			},
 
 			"product_id": {
-				MarkdownDescription: "The ID of the Product to configure",
+				MarkdownDescription: "The ID of the Product to configure. Although optional, either the Product ID or the Engagement ID must be defined to create a Jira Product Configuration.",
 				Optional:            true,
 				Type:                types.StringType,
 			},
