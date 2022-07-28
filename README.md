@@ -119,6 +119,16 @@ $ git tag v0.0.1
 $ git push --tags
 ```
 
+## Releasing a pre-release version
+
+You can release a pre-release version from any commit. Just name the tag with a suffix:
+
+```
+$ git checkout something
+$ git tag v0.0.1-pre
+$ git push --tags
+```
+
 ## Contributing
 
 Pull requests are welcome. By contributing to this repository you are agreeing to the [Contributor License Agreement (CONTRIBUTING.md)](./CONTRIBUTING.md)
