@@ -100,7 +100,15 @@ Run one test at a time:
 TESTARGS="-run TestFunctionName" make testacc
 ```
 
+Extra debug output:
+
+```shell
+TF_LOG="DEBUG" make testacc
+```
+
 ## Releasing a new version
+
+Create a branch/pull-request named something like `prepare for release v0.0.1`. Update the CHANGELOG.md file.
 
 Merge your changes to `master` and then push a version tag to master, like:
 
@@ -108,6 +116,16 @@ Merge your changes to `master` and then push a version tag to master, like:
 $ git checkout master
 $ git pull
 $ git tag v0.0.1
+$ git push --tags
+```
+
+## Releasing a pre-release version
+
+You can release a pre-release version from any commit. Just name the tag with a suffix:
+
+```
+$ git checkout something
+$ git tag v0.0.1-pre
 $ git push --tags
 ```
 
