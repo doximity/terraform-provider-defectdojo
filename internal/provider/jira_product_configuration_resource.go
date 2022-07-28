@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 )
@@ -127,7 +126,10 @@ func (t jiraProductConfigurationResourceType) NewResource(ctx context.Context, i
 	provider, diags := convertProviderType(in)
 
 	return jiraProductConfigurationResource{
-		provider: provider,
+		terraformResource: terraformResource{
+			provider:     provider,
+			dataProvider: jiraProductConfigurationDataProvider{},
+		},
 	}, diags
 }
 
@@ -145,7 +147,50 @@ type jiraProductConfigurationResourceData struct {
 	Id                                   types.String `tfsdk:"id"`
 }
 
-func (d *jiraProductConfigurationResourceData) populate(jiraProject *dd.JIRAProject) {
+type jiraProductConfigurationDefectdojoResource struct {
+	dd.JIRAProject
+}
+
+func (ddr *jiraProductConfigurationDefectdojoResource) createApiCall(ctx context.Context, p provider) (int, []byte, error) {
+	reqBody := dd.JiraProductConfigurationsCreateJSONRequestBody(ddr.JIRAProject)
+	apiResp, err := p.client.JiraProductConfigurationsCreateWithResponse(ctx, reqBody)
+	if apiResp.JSON201 != nil {
+		ddr.JIRAProject = *apiResp.JSON201
+	}
+
+	return apiResp.StatusCode(), apiResp.Body, err
+}
+
+func (ddr *jiraProductConfigurationDefectdojoResource) readApiCall(ctx context.Context, p provider, idNumber int) (int, []byte, error) {
+	apiResp, err := p.client.JiraProductConfigurationsRetrieveWithResponse(ctx, idNumber)
+	if apiResp.JSON200 != nil {
+		ddr.JIRAProject = *apiResp.JSON200
+	}
+
+	return apiResp.StatusCode(), apiResp.Body, err
+}
+
+func (ddr *jiraProductConfigurationDefectdojoResource) updateApiCall(ctx context.Context, p provider, idNumber int) (int, []byte, error) {
+	reqBody := dd.JiraProductConfigurationsUpdateJSONRequestBody(ddr.JIRAProject)
+	apiResp, err := p.client.JiraProductConfigurationsUpdateWithResponse(ctx, idNumber, reqBody)
+	if apiResp.JSON200 != nil {
+		ddr.JIRAProject = *apiResp.JSON200
+	}
+	return apiResp.StatusCode(), apiResp.Body, err
+}
+
+func (ddr *jiraProductConfigurationDefectdojoResource) deleteApiCall(ctx context.Context, p provider, idNumber int) (int, []byte, error) {
+	apiResp, err := p.client.JiraProductConfigurationsDestroyWithResponse(ctx, idNumber)
+	return apiResp.StatusCode(), apiResp.Body, err
+}
+
+func (d *jiraProductConfigurationResourceData) id() types.String {
+	return d.Id
+}
+
+func (d *jiraProductConfigurationResourceData) populate(ddResource defectdojoResource) {
+	jiraProject := ddResource.(*jiraProductConfigurationDefectdojoResource)
+
 	d.Id = types.String{Value: fmt.Sprint(jiraProject.Id)}
 
 	if jiraProject.Product != nil {
@@ -180,7 +225,7 @@ func (d *jiraProductConfigurationResourceData) populate(jiraProject *dd.JIRAProj
 	}
 }
 
-func (d *jiraProductConfigurationResourceData) jiraProject(diags *diag.Diagnostics) (*dd.JIRAProject, error) {
+func (d *jiraProductConfigurationResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
 	var productIdNumber, engagementIdNumber, jiraInstanceIdNumber int
 	var err error
 
@@ -232,11 +277,15 @@ func (d *jiraProductConfigurationResourceData) jiraProject(diags *diag.Diagnosti
 		ret.JiraInstance = ref.Of(jiraInstanceIdNumber)
 	}
 
-	return &ret, nil
+	ddResource := jiraProductConfigurationDefectdojoResource{
+		JIRAProject: ret,
+	}
+
+	return &ddResource, nil
 }
 
 type jiraProductConfigurationResource struct {
-	provider provider
+	terraformResource
 }
 
 func (r jiraProductConfigurationResource) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
@@ -249,195 +298,10 @@ func (r jiraProductConfigurationResource) ValidateConfig(ctx context.Context, re
 	}
 }
 
-func (r jiraProductConfigurationResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+type jiraProductConfigurationDataProvider struct{}
+
+func (r jiraProductConfigurationDataProvider) getData(ctx context.Context, getter dataGetter) (terraformResourceData, diag.Diagnostics) {
 	var data jiraProductConfigurationResourceData
-
-	diags := req.Config.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	jiraProject, err := data.jiraProject(&resp.Diagnostics)
-	if err != nil {
-		return
-	}
-	reqBody := dd.JiraProductConfigurationsCreateJSONRequestBody(*jiraProject)
-	apiResp, err := r.provider.client.JiraProductConfigurationsCreateWithResponse(ctx, reqBody)
-
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Creating Resource",
-			fmt.Sprintf("%s", err))
-		return
-	}
-
-	if apiResp.StatusCode() == 201 {
-
-		data.populate(apiResp.JSON201)
-	} else {
-		resp.Diagnostics.AddError(
-			"API Error Creating Resource",
-			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
-				fmt.Sprintf("\n\nbody:\n\n%s", string(apiResp.Body)),
-		)
-		return
-	}
-
-	tflog.Trace(ctx, "created a JiraProductConfiguration")
-
-	diags = resp.State.Set(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r jiraProductConfigurationResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var data jiraProductConfigurationResourceData
-
-	diags := req.State.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if data.Id.Null {
-		resp.Diagnostics.AddError(
-			"Could not Retrieve Resource",
-			"The Id field was null but it is required to retrieve the product")
-		return
-	}
-
-	idNumber, err := strconv.Atoi(data.Id.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Could not Retrieve Resource",
-			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-		return
-	}
-
-	apiResp, err := r.provider.client.JiraProductConfigurationsRetrieveWithResponse(ctx, idNumber)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Retrieving Resource",
-			fmt.Sprintf("%s", err))
-		return
-	}
-
-	if apiResp.StatusCode() == 200 {
-		data.populate(apiResp.JSON200)
-	} else if apiResp.StatusCode() == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	} else {
-		resp.Diagnostics.AddError(
-			"API Error Retrieving Resource",
-			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
-				fmt.Sprintf("\n\nbody:\n\n%+v", string(apiResp.Body)),
-		)
-		return
-	}
-
-	diags = resp.State.Set(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r jiraProductConfigurationResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var data jiraProductConfigurationResourceData
-
-	diags := req.Plan.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if data.Id.Null {
-		resp.Diagnostics.AddError(
-			"Could not Update Resource",
-			"The Id field was null but it is required to retrieve the product")
-		return
-	}
-
-	idNumber, err := strconv.Atoi(data.Id.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Could not Update Resource",
-			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-		return
-	}
-
-	jiraProject, err := data.jiraProject(&resp.Diagnostics)
-	reqBody := dd.JiraProductConfigurationsUpdateJSONRequestBody(*jiraProject)
-	apiResp, err := r.provider.client.JiraProductConfigurationsUpdateWithResponse(ctx, idNumber, reqBody)
-
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Resource",
-			fmt.Sprintf("%s", err))
-		return
-	}
-
-	if apiResp.StatusCode() == 200 {
-		data.populate(apiResp.JSON200)
-	} else {
-		resp.Diagnostics.AddError(
-			"API Error Updating Resource",
-			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
-				fmt.Sprintf("\n\nbody:\n\n%+v", string(apiResp.Body)),
-		)
-		return
-	}
-
-	diags = resp.State.Set(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r jiraProductConfigurationResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var data jiraProductConfigurationResourceData
-
-	diags := req.State.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if data.Id.Null {
-		resp.Diagnostics.AddError(
-			"Could not Delete Resource",
-			"The Id field was null but it is required to retrieve the product")
-		return
-	}
-
-	idNumber, err := strconv.Atoi(data.Id.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Could not Delete Resource",
-			fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-		return
-	}
-
-	apiResp, err := r.provider.client.JiraProductConfigurationsDestroyWithResponse(ctx, idNumber)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Resource",
-			fmt.Sprintf("%s", err))
-		return
-	}
-
-	if apiResp.StatusCode() != 204 {
-		resp.Diagnostics.AddError(
-			"API Error Deleting Resource",
-			fmt.Sprintf("Unexpected response code from API: %d", apiResp.StatusCode())+
-				fmt.Sprintf("\n\nbody:\n\n%+v", string(apiResp.Body)),
-		)
-		return
-	}
-
-	resp.State.RemoveResource(ctx)
-}
-
-func (r jiraProductConfigurationResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+	diags := getter.Get(ctx, &data)
+	return &data, diags
 }
