@@ -24,8 +24,11 @@ resource "defectdojo_product_type" "example" {
 
 ### Required
 
-- `description` (String) The description of the Product Type
 - `name` (String) The name of the Product Type
+
+### Optional
+
+- `description` (String) The description of the Product Type
 
 ### Read-Only
 
