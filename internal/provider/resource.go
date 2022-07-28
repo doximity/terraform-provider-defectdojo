@@ -232,6 +232,6 @@ func (r terraformResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 	resp.State.RemoveResource(ctx)
 }
 
-func (r jiraProductConfigurationResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r terraformResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
