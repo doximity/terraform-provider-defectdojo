@@ -21,6 +21,8 @@ func TestAccProductResource(t *testing.T) {
 					resource.TestCheckResourceAttr("defectdojo_product.test", "name", name),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "description", "test"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "product_type_id", "1"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "tags.0", "bar"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "tags.1", "foo"),
 				),
 			},
 			// ImportState testing
@@ -85,6 +87,7 @@ resource "defectdojo_product" "test" {
   name = %[1]q
   description = "test"
   product_type_id = 1
+  tags = ["foo", "bar"]
 }
 `, name)
 }

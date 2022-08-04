@@ -7,9 +7,9 @@ import (
 
 	dd "github.com/doximity/defect-dojo-client-go"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 )
@@ -290,9 +290,9 @@ type jiraProductConfigurationResource struct {
 
 func (r jiraProductConfigurationResource) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
 	var productId types.String
-	req.Config.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("product_id"), &productId)
+	req.Config.GetAttribute(ctx, path.Root("product_id"), &productId)
 	var engagementId types.String
-	req.Config.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("engagement_id"), &engagementId)
+	req.Config.GetAttribute(ctx, path.Root("engagement_id"), &engagementId)
 	if productId.IsNull() && engagementId.IsNull() {
 		resp.Diagnostics.AddError("Invalid Resource", "The jira_product_configuration resource is invalid. Either product_id or engagement_id must be set.")
 	}
