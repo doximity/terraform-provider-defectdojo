@@ -59,6 +59,7 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 
@@ -89,6 +90,7 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 

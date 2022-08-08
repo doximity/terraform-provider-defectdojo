@@ -93,6 +93,7 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"internet_accessible": {
@@ -102,6 +103,7 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"enable_skip_risk_acceptance": {
@@ -111,6 +113,7 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"enable_full_risk_acceptance": {
@@ -120,6 +123,7 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
+					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"product_manager_id": {
