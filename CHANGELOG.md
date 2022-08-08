@@ -1,3 +1,20 @@
+## 0.0.11
+
+FEATURES:
+ - Add the following fields to `defectdojo_product` resource:
+   - `business_criticality`
+   - `enable_full_risk_acceptance`
+   - `enable_skip_risk_acceptance`
+   - `external_audience`
+   - `internet_accessible`
+   - `lifecycle`
+   - `origin`
+   - `platform`
+   - `prod_numeric_grade`
+   - `regulation_ids`
+   - `revenue`
+   - `user_records`
+
 ## 0.0.10
 
 FEATURES:
