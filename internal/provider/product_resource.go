@@ -8,6 +8,7 @@ import (
 	dd "github.com/doximity/defect-dojo-client-go"
 	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -32,6 +33,9 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				MarkdownDescription: "The description of the Product",
 				Required:            true,
 				Type:                types.StringType,
+				Validators: []tfsdk.AttributeValidator{
+					stringvalidator.RegexMatches(regexp.MustCompile(`\A[^\s].*[^\s]\z`), "The description must not have leading or trailing whitespace"),
+				},
 			},
 			"prod_numeric_grade": {
 				MarkdownDescription: "The Numeric Grade of the Product",
@@ -83,7 +87,7 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Optional:            true,
 				Type:                types.StringType,
 				Validators: []tfsdk.AttributeValidator{
-					stringvalidator.RegexMatches(regexp.MustCompile(`^-?\d{0,13}(?:\.\d{0,2})?$`), `Must be a decimal number format, i.e. /^-?\d{0,13}(?:\.\d{0,2})?$/`),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\A-?\d{0,13}(?:\.\d{0,2})?\z`), `Must be a decimal number format, i.e. /^-?\d{0,13}(?:\.\d{0,2})?$/`),
 				},
 			},
 			"external_audience": {
@@ -158,6 +162,11 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Optional:            true,
 				Type: types.SetType{
 					ElemType: types.StringType,
+				},
+				Validators: []tfsdk.AttributeValidator{
+					setvalidator.ValuesAre(
+						stringvalidator.RegexMatches(regexp.MustCompile(`\A[a-z]+\z`), "Tags must be lower case values"),
+					),
 				},
 			},
 			"id": {

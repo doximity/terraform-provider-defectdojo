@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -93,12 +94,30 @@ func TestAccProductResourceDeleteDrift(t *testing.T) {
 	})
 }
 
+func TestAccProductResourceInvalid(t *testing.T) {
+	name := fmt.Sprintf("dox-invalid-%s", resource.UniqueId())
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile(`.*Invalid\s+Attribute.*`),
+				Config:      testAccProductResourceInvalidConfig(name),
+			},
+		},
+	})
+}
+
 func testAccProductResourceConfig(name string) string {
 	return fmt.Sprintf(`
 provider "defectdojo" {}
 resource "defectdojo_product" "test" {
   name = %[1]q
-  description = "test"
+  description = trimspace(<<-DOC
+	  test
+  DOC
+	)
   product_type_id = 1
   tags = ["foo", "bar"]
 
@@ -114,6 +133,21 @@ resource "defectdojo_product" "test" {
   regulation_ids = []
   revenue = "100.00"
   user_records = 1000000
+}
+`, name)
+}
+
+func testAccProductResourceInvalidConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_product" "test" {
+  name = %[1]q
+  description = "test"
+  product_type_id = 1
+  tags = ["foo", "BAR"]
+
+  business_criticality = "something else"
+  revenue = "a lot of money"
 }
 `, name)
 }
