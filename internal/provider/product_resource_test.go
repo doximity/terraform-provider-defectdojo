@@ -56,6 +56,40 @@ func TestAccProductResource(t *testing.T) {
 		},
 	})
 }
+func TestAccProductNoTagsResource(t *testing.T) {
+	name := fmt.Sprintf("dox-test-repo-%s", resource.UniqueId())
+	updatedName := fmt.Sprintf("dox-new-name-%s", resource.UniqueId())
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccProductResourceNoTagsConfig(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("defectdojo_product.test", "name", name),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "description", "test"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "product_type_id", "1"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "tags.#", "0"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "defectdojo_product.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccProductResourceConfig(updatedName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("defectdojo_product.test", "name", updatedName),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
 
 func TestAccProductResourceDeleteDrift(t *testing.T) {
 	name := fmt.Sprintf("dox-delete-%s", resource.UniqueId())
@@ -107,6 +141,33 @@ func TestAccProductResourceInvalid(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccProductResourceNoTagsConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_product" "test" {
+  name = %[1]q
+  description = trimspace(<<-DOC
+	  test
+  DOC
+	)
+  product_type_id = 1
+
+  business_criticality = "high"
+  enable_full_risk_acceptance = false
+  enable_skip_risk_acceptance = true
+  external_audience = true
+  internet_accessible = true
+  lifecycle = "production"
+  origin = "internal"
+  platform = "web"
+  prod_numeric_grade = 100
+  regulation_ids = []
+  revenue = "100.00"
+  user_records = 1000000
+}
+`, name)
 }
 
 func testAccProductResourceConfig(name string) string {

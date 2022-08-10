@@ -407,11 +407,7 @@ func (d *productResourceData) defectdojoResource(diags *diag.Diagnostics) (defec
 		product.Regulations = &ids
 	}
 	if len(d.Tags) != 0 {
-		var tags []string
-		for _, tag := range d.Tags {
-			tags = append(tags, tag)
-		}
-		product.Tags = &tags
+		product.Tags = &d.Tags
 	}
 
 	return &productDefectdojoResource{
