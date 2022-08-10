@@ -1,3 +1,8 @@
+## 0.0.12
+
+BUGFIX:
+ - A product with no tags specified would cause a provider error from terraform.
+
 ## 0.0.11
 
 FEATURES:
