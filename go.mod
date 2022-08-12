@@ -6,9 +6,9 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/doximity/defect-dojo-client-go v0.1.0
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
-	github.com/hashicorp/terraform-plugin-framework v0.10.0
+	github.com/hashicorp/terraform-plugin-framework v0.11.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.4.0
-	github.com/hashicorp/terraform-plugin-go v0.12.0
+	github.com/hashicorp/terraform-plugin-go v0.13.0
 	github.com/hashicorp/terraform-plugin-log v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.20.0
 )
