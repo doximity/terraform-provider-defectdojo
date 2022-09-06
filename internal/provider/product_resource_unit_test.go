@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"testing"
 
 	dd "github.com/doximity/defect-dojo-client-go"
@@ -8,6 +9,7 @@ import (
 )
 
 func TestProductResourcePopulate(t *testing.T) {
+	expectedId := 99
 	expectedDescription := "A Description"
 	expectedName := "A Name"
 	expectedBusinessCriticality := "medium"
@@ -29,6 +31,7 @@ func TestProductResourcePopulate(t *testing.T) {
 
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{
+			Id:                         expectedId,
 			Description:                expectedDescription,
 			Name:                       expectedName,
 			BusinessCriticality:        (*dd.ProductBusinessCriticality)(&expectedBusinessCriticality),
@@ -49,6 +52,7 @@ func TestProductResourcePopulate(t *testing.T) {
 	}
 	productResource := productResourceData{}
 	productResource.populate(&ddProduct)
+	assert.Equal(t, productResource.Id.Value, fmt.Sprint(expectedId))
 	assert.Equal(t, productResource.Description.Value, expectedDescription)
 	assert.Equal(t, productResource.Name.Value, expectedName)
 	assert.Equal(t, productResource.BusinessCriticality.Value, expectedBusinessCriticality)

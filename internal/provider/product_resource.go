@@ -197,7 +197,7 @@ type productResourceData struct {
 	Name                       types.String `tfsdk:"name" ddField:"Name"`
 	Description                types.String `tfsdk:"description" ddField:"Description"`
 	ProductTypeId              types.Int64  `tfsdk:"product_type_id" ddField:"ProdType"`
-	Id                         types.String `tfsdk:"id"`
+	Id                         types.String `tfsdk:"id" ddField:"Id"`
 	BusinessCriticality        types.String `tfsdk:"business_criticality" ddField:"BusinessCriticality"`
 	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance" ddField:"EnableFullRiskAcceptance"`
 	EnableSimpleRiskAcceptance types.Bool   `tfsdk:"enable_skip_risk_acceptance" ddField:"EnableSimpleRiskAcceptance"`
@@ -318,6 +318,10 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 					if !ddFieldValue.IsNil() {
 						fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.Elem().String()}))
 					}
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Int {
+					fieldValue.Set(reflect.ValueOf(types.String{Value: fmt.Sprint(ddFieldValue.Int())}))
+				} else {
+					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 			case typeOfTypesBool:
 				if ddFieldDescriptor.Type.Kind() == reflect.Bool {
@@ -329,6 +333,8 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 					if !ddFieldValue.IsNil() {
 						fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Elem().Bool()}))
 					}
+				} else {
+					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 			case typeOfTypesInt64:
 				if ddFieldDescriptor.Type.Kind() == reflect.Int64 || ddFieldDescriptor.Type.Kind() == reflect.Int {
@@ -340,12 +346,16 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 					if !ddFieldValue.IsNil() {
 						fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Elem().Int())}))
 					}
+				} else {
+					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
+			default:
+				fmt.Printf("WARN: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 			}
 		}
 	}
 
-	d.Id = types.String{Value: fmt.Sprint(product.Id)}
+	// d.Id = types.String{Value: fmt.Sprint(product.Id)}
 	// d.Name = types.String{Value: product.Name}
 	// d.Description = types.String{Value: product.Description}
 	// d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
