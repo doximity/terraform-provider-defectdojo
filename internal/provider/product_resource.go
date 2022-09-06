@@ -208,9 +208,9 @@ type productResourceData struct {
 	Platform                   types.String `tfsdk:"platform" ddField:"Platform"`
 	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade" ddField:"ProdNumericGrade"`
 	ProductManagerId           types.Int64  `tfsdk:"product_manager_id" ddField:"ProductManager"`
-	RegulationIds              []int64      `tfsdk:"regulation_ids"`
+	RegulationIds              []int64      `tfsdk:"regulation_ids" ddField:"Regulations"`
 	Revenue                    types.String `tfsdk:"revenue" ddField:"Revenue"`
-	Tags                       []string     `tfsdk:"tags"`
+	Tags                       []string     `tfsdk:"tags" ddField:"Tags"`
 	TeamManagerId              types.Int64  `tfsdk:"team_manager_id" ddField:"TeamManager"`
 	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id" ddField:"TechnicalContact"`
 	UserRecords                types.Int64  `tfsdk:"user_records" ddField:"UserRecords"`
@@ -280,6 +280,8 @@ func (d *productResourceData) id() types.String {
 var typeOfTypesString = reflect.TypeOf(types.String{})
 var typeOfTypesBool = reflect.TypeOf(types.Bool{})
 var typeOfTypesInt64 = reflect.TypeOf(types.Int64{})
+var typeOfStringSlice = reflect.TypeOf([]string{})
+var typeOfInt64Slice = reflect.TypeOf([]int64{})
 
 func (d *productResourceData) populate(ddResource defectdojoResource) {
 	tflog.Info(context.Background(), "populate")
@@ -306,8 +308,8 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 			fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
 			fmt.Printf("fieldDescriptor: Kind = %s, Name = %s, type = %s\n", fieldDescriptor.Type.Kind(), fieldDescriptor.Name, fieldDescriptor.Type)
 
-			// the field we want to set is a `types.String`.
 			switch fieldDescriptor.Type {
+
 			case typeOfTypesString:
 				if ddFieldDescriptor.Type.Kind() == reflect.String {
 					// if the source field is a string, we can use it directly
@@ -323,6 +325,7 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 				} else {
 					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
+
 			case typeOfTypesBool:
 				if ddFieldDescriptor.Type.Kind() == reflect.Bool {
 					// if the source field is a bool, we can use it directly
@@ -336,6 +339,7 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 				} else {
 					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
+
 			case typeOfTypesInt64:
 				if ddFieldDescriptor.Type.Kind() == reflect.Int64 || ddFieldDescriptor.Type.Kind() == reflect.Int {
 					// if the source field is an int64, we can use it directly
@@ -345,6 +349,38 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 					// but only if the pointer is not nil
 					if !ddFieldValue.IsNil() {
 						fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Elem().Int())}))
+					}
+				} else {
+					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+				}
+
+			case typeOfStringSlice:
+				if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Slice && ddFieldDescriptor.Type.Elem().Elem().Kind() == reflect.String {
+					// if the source field is a pointer, make sure it's a pointer to a []string, and then we can grab the pointed-to value,
+					// but only if the pointer is not nil
+					if !ddFieldValue.IsNil() && ddFieldValue.Elem().Len() > 0 {
+						fieldValue.Set(ddFieldValue.Elem())
+					}
+				} else {
+					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+				}
+
+			case typeOfInt64Slice:
+				if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Slice {
+					// the source field is a pointer to a slice
+					// if ddFieldDescriptor.Type.Elem().Elem().Kind() == reflect.Int64 {
+					// 	// it's a pointer to a slice of int64 (not implemented, not seen yet in wild)
+					// }
+					if ddFieldDescriptor.Type.Elem().Elem().Kind() == reflect.Int {
+						// it's a pointer to a slice of int
+						if !ddFieldValue.IsNil() && ddFieldValue.Elem().Len() > 0 {
+							ints := ddFieldValue.Elem().Interface().([]int)
+							int64s := []int64{}
+							for _, val := range ints {
+								int64s = append(int64s, (int64)(val))
+							}
+							fieldValue.Set(reflect.ValueOf(int64s))
+						}
 					}
 				} else {
 					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
@@ -401,27 +437,27 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 	// if product.TeamManager != nil {
 	// 	d.TeamManagerId = types.Int64{Value: int64(*product.TeamManager)}
 	// }
-	if product.Regulations != nil && len(*product.Regulations) > 0 {
-		var ids []int64
-		for _, r := range *product.Regulations {
-			ids = append(ids, int64(r))
-		}
-		d.RegulationIds = ids
-		// must set to empty [] by default because
-		// the API does
-		if len(ids) == 0 {
-			d.RegulationIds = make([]int64, 0)
-		}
-	}
-	if product.Tags != nil {
-		var tags []string
-		for _, t := range *product.Tags {
-			tags = append(tags, string(t))
-		}
-		d.Tags = tags
-		// don't set to empty [] by default because
-		// the API doesn't
-	}
+	// if product.Regulations != nil && len(*product.Regulations) > 0 {
+	// 	var ids []int64
+	// 	for _, r := range *product.Regulations {
+	// 		ids = append(ids, int64(r))
+	// 	}
+	// 	d.RegulationIds = ids
+	// 	// must set to empty [] by default because
+	// 	// the API does
+	// 	if len(ids) == 0 {
+	// 		d.RegulationIds = make([]int64, 0)
+	// 	}
+	// }
+	// if product.Tags != nil {
+	// 	var tags []string
+	// 	for _, t := range *product.Tags {
+	// 		tags = append(tags, string(t))
+	// 	}
+	// 	d.Tags = tags
+	// 	// don't set to empty [] by default because
+	// 	// the API doesn't
+	// }
 }
 
 func (d *productResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {

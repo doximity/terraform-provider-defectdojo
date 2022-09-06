@@ -29,6 +29,11 @@ func TestProductResourcePopulate(t *testing.T) {
 	expectedTechnicalContactId := 46
 	expectedUserRecords := 47
 
+	expectedTags := []string{"foo", "bar", "baz"}
+
+	expectedRegulations := []int{99, 100, 101}
+	expectedRegulations64 := []int64{99, 100, 101}
+
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{
 			Id:                         expectedId,
@@ -48,6 +53,8 @@ func TestProductResourcePopulate(t *testing.T) {
 			TeamManager:                &expectedTeamManagerId,
 			TechnicalContact:           &expectedTechnicalContactId,
 			UserRecords:                &expectedUserRecords,
+			Tags:                       &expectedTags,
+			Regulations:                &expectedRegulations,
 		},
 	}
 	productResource := productResourceData{}
@@ -69,8 +76,13 @@ func TestProductResourcePopulate(t *testing.T) {
 	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(expectedTeamManagerId))
 	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(expectedTechnicalContactId))
 	assert.Equal(t, productResource.UserRecords.Value, (int64)(expectedUserRecords))
+	assert.DeepEqual(t, productResource.Tags, expectedTags)
+	assert.DeepEqual(t, productResource.RegulationIds, expectedRegulations64)
 }
 func TestProductResourcePopulateNils(t *testing.T) {
+
+	var nilStringSlice []string
+	var nilInt64Slice []int64
 
 	productResource := productResourceData{}
 	assert.Equal(t, productResource.Description.Value, "")
@@ -83,6 +95,14 @@ func TestProductResourcePopulateNils(t *testing.T) {
 	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, false)
 	assert.Equal(t, productResource.ExternalAudience.Value, false)
 	assert.Equal(t, productResource.InternetAccessible.Value, false)
+	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(0))
+	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(0))
+	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(0))
+	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(0))
+	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(0))
+	assert.Equal(t, productResource.UserRecords.Value, (int64)(0))
+	assert.DeepEqual(t, productResource.Tags, nilStringSlice)
+	assert.DeepEqual(t, productResource.RegulationIds, nilInt64Slice)
 
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{},
@@ -100,4 +120,12 @@ func TestProductResourcePopulateNils(t *testing.T) {
 	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, false)
 	assert.Equal(t, productResource.ExternalAudience.Value, false)
 	assert.Equal(t, productResource.InternetAccessible.Value, false)
+	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(0))
+	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(0))
+	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(0))
+	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(0))
+	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(0))
+	assert.Equal(t, productResource.UserRecords.Value, (int64)(0))
+	assert.DeepEqual(t, productResource.Tags, nilStringSlice)
+	assert.DeepEqual(t, productResource.RegulationIds, nilInt64Slice)
 }
