@@ -196,7 +196,7 @@ func (t productResourceType) NewResource(ctx context.Context, in tfsdk.Provider)
 type productResourceData struct {
 	Name                       types.String `tfsdk:"name" ddField:"Name"`
 	Description                types.String `tfsdk:"description" ddField:"Description"`
-	ProductTypeId              types.Int64  `tfsdk:"product_type_id"`
+	ProductTypeId              types.Int64  `tfsdk:"product_type_id" ddField:"ProdType"`
 	Id                         types.String `tfsdk:"id"`
 	BusinessCriticality        types.String `tfsdk:"business_criticality" ddField:"BusinessCriticality"`
 	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance" ddField:"EnableFullRiskAcceptance"`
@@ -206,14 +206,14 @@ type productResourceData struct {
 	Lifecycle                  types.String `tfsdk:"lifecycle" ddField:"Lifecycle"`
 	Origin                     types.String `tfsdk:"origin" ddField:"Origin"`
 	Platform                   types.String `tfsdk:"platform" ddField:"Platform"`
-	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade"`
-	ProductManagerId           types.Int64  `tfsdk:"product_manager_id"`
+	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade" ddField:"ProdNumericGrade"`
+	ProductManagerId           types.Int64  `tfsdk:"product_manager_id" ddField:"ProductManager"`
 	RegulationIds              []int64      `tfsdk:"regulation_ids"`
 	Revenue                    types.String `tfsdk:"revenue" ddField:"Revenue"`
 	Tags                       []string     `tfsdk:"tags"`
-	TeamManagerId              types.Int64  `tfsdk:"team_manager_id"`
-	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id"`
-	UserRecords                types.Int64  `tfsdk:"user_records"`
+	TeamManagerId              types.Int64  `tfsdk:"team_manager_id" ddField:"TeamManager"`
+	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id" ddField:"TechnicalContact"`
+	UserRecords                types.Int64  `tfsdk:"user_records" ddField:"UserRecords"`
 }
 
 type productDefectdojoResource struct {
@@ -279,6 +279,7 @@ func (d *productResourceData) id() types.String {
 
 var typeOfTypesString = reflect.TypeOf(types.String{})
 var typeOfTypesBool = reflect.TypeOf(types.Bool{})
+var typeOfTypesInt64 = reflect.TypeOf(types.Int64{})
 
 func (d *productResourceData) populate(ddResource defectdojoResource) {
 	tflog.Info(context.Background(), "populate")
@@ -308,7 +309,7 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 			// the field we want to set is a `types.String`.
 			switch fieldDescriptor.Type {
 			case typeOfTypesString:
-				if ddFieldDescriptor.Type.Kind() == reflect.String && ddFieldDescriptor.Type.Kind() == reflect.String {
+				if ddFieldDescriptor.Type.Kind() == reflect.String {
 					// if the source field is a string, we can use it directly
 					fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.String()}))
 				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.String {
@@ -319,14 +320,25 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 					}
 				}
 			case typeOfTypesBool:
-				if ddFieldDescriptor.Type.Kind() == reflect.Bool && ddFieldDescriptor.Type.Kind() == reflect.Bool {
+				if ddFieldDescriptor.Type.Kind() == reflect.Bool {
 					// if the source field is a bool, we can use it directly
 					fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Bool()}))
 				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Bool {
-					// if the source field is a pointer, make sure it's a pointer to a string, and then we can grab the pointed-to value,
+					// if the source field is a pointer, make sure it's a pointer to a bool, and then we can grab the pointed-to value,
 					// but only if the pointer is not nil
 					if !ddFieldValue.IsNil() {
 						fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Elem().Bool()}))
+					}
+				}
+			case typeOfTypesInt64:
+				if ddFieldDescriptor.Type.Kind() == reflect.Int64 || ddFieldDescriptor.Type.Kind() == reflect.Int {
+					// if the source field is an int64, we can use it directly
+					fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Int())}))
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && (ddFieldDescriptor.Type.Elem().Kind() == reflect.Int64 || ddFieldDescriptor.Type.Elem().Kind() == reflect.Int) {
+					// if the source field is a pointer, make sure it's a pointer to an int64, and then we can grab the pointed-to value,
+					// but only if the pointer is not nil
+					if !ddFieldValue.IsNil() {
+						fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Elem().Int())}))
 					}
 				}
 			}
@@ -334,12 +346,12 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 	}
 
 	d.Id = types.String{Value: fmt.Sprint(product.Id)}
-	//d.Name = types.String{Value: product.Name}
-	//d.Description = types.String{Value: product.Description}
-	d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
-	if product.ProdNumericGrade != nil {
-		d.ProdNumericGrade = types.Int64{Value: int64(*product.ProdNumericGrade)}
-	}
+	// d.Name = types.String{Value: product.Name}
+	// d.Description = types.String{Value: product.Description}
+	// d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
+	// if product.ProdNumericGrade != nil {
+	// 	d.ProdNumericGrade = types.Int64{Value: int64(*product.ProdNumericGrade)}
+	// }
 	// if product.BusinessCriticality != nil {
 	// 	d.BusinessCriticality = types.String{Value: string(*product.BusinessCriticality)}
 	// }
@@ -352,9 +364,9 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 	// if product.Origin != nil {
 	// 	d.Origin = types.String{Value: string(*product.Origin)}
 	// }
-	if product.UserRecords != nil {
-		d.UserRecords = types.Int64{Value: int64(*product.UserRecords)}
-	}
+	// if product.UserRecords != nil {
+	// 	d.UserRecords = types.Int64{Value: int64(*product.UserRecords)}
+	// }
 	// if product.Revenue != nil {
 	// 	d.Revenue = types.String{Value: string(*product.Revenue)}
 	// }
@@ -370,15 +382,15 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 	// if product.EnableFullRiskAcceptance != nil {
 	// 	d.EnableFullRiskAcceptance = types.Bool{Value: bool(*product.EnableFullRiskAcceptance)}
 	// }
-	if product.ProductManager != nil {
-		d.ProductManagerId = types.Int64{Value: int64(*product.ProductManager)}
-	}
-	if product.TechnicalContact != nil {
-		d.TechnicalContactId = types.Int64{Value: int64(*product.TechnicalContact)}
-	}
-	if product.TeamManager != nil {
-		d.TeamManagerId = types.Int64{Value: int64(*product.TeamManager)}
-	}
+	// if product.ProductManager != nil {
+	// 	d.ProductManagerId = types.Int64{Value: int64(*product.ProductManager)}
+	// }
+	// if product.TechnicalContact != nil {
+	// 	d.TechnicalContactId = types.Int64{Value: int64(*product.TechnicalContact)}
+	// }
+	// if product.TeamManager != nil {
+	// 	d.TeamManagerId = types.Int64{Value: int64(*product.TeamManager)}
+	// }
 	if product.Regulations != nil && len(*product.Regulations) > 0 {
 		var ids []int64
 		for _, r := range *product.Regulations {

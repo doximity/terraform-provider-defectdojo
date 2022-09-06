@@ -14,10 +14,18 @@ func TestProductResourcePopulate(t *testing.T) {
 	expectedPlatform := "web"
 	expectedLifecycle := "construction"
 	expectedOrigin := "internal"
+
 	expectedEnableFullRiskAcceptance := true
 	expectedEnableSimpleRiskAcceptance := true
 	expectedExternalAudience := true
 	expectedInternetAccessible := true
+
+	expectedProductTypeId := 42
+	expectedProdNumericGrade := 43
+	expectedProductManagerId := 44
+	expectedTeamManagerId := 45
+	expectedTechnicalContactId := 46
+	expectedUserRecords := 47
 
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{
@@ -31,6 +39,12 @@ func TestProductResourcePopulate(t *testing.T) {
 			EnableSimpleRiskAcceptance: &expectedEnableSimpleRiskAcceptance,
 			ExternalAudience:           &expectedExternalAudience,
 			InternetAccessible:         &expectedInternetAccessible,
+			ProdType:                   expectedProductTypeId,
+			ProdNumericGrade:           &expectedProdNumericGrade,
+			ProductManager:             &expectedProductManagerId,
+			TeamManager:                &expectedTeamManagerId,
+			TechnicalContact:           &expectedTechnicalContactId,
+			UserRecords:                &expectedUserRecords,
 		},
 	}
 	productResource := productResourceData{}
@@ -45,6 +59,12 @@ func TestProductResourcePopulate(t *testing.T) {
 	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, expectedEnableSimpleRiskAcceptance)
 	assert.Equal(t, productResource.ExternalAudience.Value, expectedExternalAudience)
 	assert.Equal(t, productResource.InternetAccessible.Value, expectedInternetAccessible)
+	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(expectedProductTypeId))
+	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(expectedProdNumericGrade))
+	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(expectedProductManagerId))
+	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(expectedTeamManagerId))
+	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(expectedTechnicalContactId))
+	assert.Equal(t, productResource.UserRecords.Value, (int64)(expectedUserRecords))
 }
 func TestProductResourcePopulateNils(t *testing.T) {
 
