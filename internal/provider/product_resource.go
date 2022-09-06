@@ -289,14 +289,14 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 
 	resourceVal := reflect.ValueOf(d).Elem()
 	resourceType := resourceVal.Type()
-	fmt.Printf("resourceVal: %s\n", resourceVal)
-	fmt.Printf("resourceType: %s\n", resourceType)
+	// fmt.Printf("resourceVal: %s\n", resourceVal)
+	// fmt.Printf("resourceType: %s\n", resourceType)
 
 	ddVal := reflect.ValueOf(product).Elem()
 
 	for i := 0; i < resourceVal.NumField(); i++ {
 		fieldDescriptor := resourceType.Field(i)
-		fmt.Printf("field: %s\n", fieldDescriptor.Name)
+		// fmt.Printf("field: %s\n", fieldDescriptor.Name)
 		tag := fieldDescriptor.Tag
 		ddFieldName := tag.Get("ddField")
 		if ddFieldName != "" {
@@ -305,8 +305,8 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 			ddFieldDescriptor, _ := ddVal.Type().FieldByName(ddFieldName)
 			ddFieldValue := ddVal.FieldByName(ddFieldName)
 
-			fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
-			fmt.Printf("fieldDescriptor: Kind = %s, Name = %s, type = %s\n", fieldDescriptor.Type.Kind(), fieldDescriptor.Name, fieldDescriptor.Type)
+			// fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
+			// fmt.Printf("fieldDescriptor: Kind = %s, Name = %s, type = %s\n", fieldDescriptor.Type.Kind(), fieldDescriptor.Name, fieldDescriptor.Type)
 
 			switch fieldDescriptor.Type {
 
@@ -390,74 +390,6 @@ func (d *productResourceData) populate(ddResource defectdojoResource) {
 			}
 		}
 	}
-
-	// d.Id = types.String{Value: fmt.Sprint(product.Id)}
-	// d.Name = types.String{Value: product.Name}
-	// d.Description = types.String{Value: product.Description}
-	// d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
-	// if product.ProdNumericGrade != nil {
-	// 	d.ProdNumericGrade = types.Int64{Value: int64(*product.ProdNumericGrade)}
-	// }
-	// if product.BusinessCriticality != nil {
-	// 	d.BusinessCriticality = types.String{Value: string(*product.BusinessCriticality)}
-	// }
-	// if product.Platform != nil {
-	// 	d.Platform = types.String{Value: string(*product.Platform)}
-	// }
-	// if product.Lifecycle != nil {
-	// 	d.Lifecycle = types.String{Value: string(*product.Lifecycle)}
-	// }
-	// if product.Origin != nil {
-	// 	d.Origin = types.String{Value: string(*product.Origin)}
-	// }
-	// if product.UserRecords != nil {
-	// 	d.UserRecords = types.Int64{Value: int64(*product.UserRecords)}
-	// }
-	// if product.Revenue != nil {
-	// 	d.Revenue = types.String{Value: string(*product.Revenue)}
-	// }
-	// if product.ExternalAudience != nil {
-	// 	d.ExternalAudience = types.Bool{Value: bool(*product.ExternalAudience)}
-	// }
-	// if product.InternetAccessible != nil {
-	// 	d.InternetAccessible = types.Bool{Value: bool(*product.InternetAccessible)}
-	// }
-	// if product.EnableSimpleRiskAcceptance != nil {
-	// 	d.EnableSimpleRiskAcceptance = types.Bool{Value: bool(*product.EnableSimpleRiskAcceptance)}
-	// }
-	// if product.EnableFullRiskAcceptance != nil {
-	// 	d.EnableFullRiskAcceptance = types.Bool{Value: bool(*product.EnableFullRiskAcceptance)}
-	// }
-	// if product.ProductManager != nil {
-	// 	d.ProductManagerId = types.Int64{Value: int64(*product.ProductManager)}
-	// }
-	// if product.TechnicalContact != nil {
-	// 	d.TechnicalContactId = types.Int64{Value: int64(*product.TechnicalContact)}
-	// }
-	// if product.TeamManager != nil {
-	// 	d.TeamManagerId = types.Int64{Value: int64(*product.TeamManager)}
-	// }
-	// if product.Regulations != nil && len(*product.Regulations) > 0 {
-	// 	var ids []int64
-	// 	for _, r := range *product.Regulations {
-	// 		ids = append(ids, int64(r))
-	// 	}
-	// 	d.RegulationIds = ids
-	// 	// must set to empty [] by default because
-	// 	// the API does
-	// 	if len(ids) == 0 {
-	// 		d.RegulationIds = make([]int64, 0)
-	// 	}
-	// }
-	// if product.Tags != nil {
-	// 	var tags []string
-	// 	for _, t := range *product.Tags {
-	// 		tags = append(tags, string(t))
-	// 	}
-	// 	d.Tags = tags
-	// 	// don't set to empty [] by default because
-	// 	// the API doesn't
-	// }
 }
 
 func (d *productResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
