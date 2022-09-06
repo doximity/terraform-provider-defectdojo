@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 
 	dd "github.com/doximity/defect-dojo-client-go"
@@ -193,22 +194,22 @@ func (t productResourceType) NewResource(ctx context.Context, in tfsdk.Provider)
 }
 
 type productResourceData struct {
-	Name                       types.String `tfsdk:"name"`
-	Description                types.String `tfsdk:"description"`
+	Name                       types.String `tfsdk:"name" ddField:"Name"`
+	Description                types.String `tfsdk:"description" ddField:"Description"`
 	ProductTypeId              types.Int64  `tfsdk:"product_type_id"`
 	Id                         types.String `tfsdk:"id"`
-	BusinessCriticality        types.String `tfsdk:"business_criticality"`
-	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance"`
-	EnableSimpleRiskAcceptance types.Bool   `tfsdk:"enable_skip_risk_acceptance"`
-	ExternalAudience           types.Bool   `tfsdk:"external_audience"`
-	InternetAccessible         types.Bool   `tfsdk:"internet_accessible"`
-	Lifecycle                  types.String `tfsdk:"lifecycle"`
-	Origin                     types.String `tfsdk:"origin"`
-	Platform                   types.String `tfsdk:"platform"`
+	BusinessCriticality        types.String `tfsdk:"business_criticality" ddField:"BusinessCriticality"`
+	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance" ddField:"EnableFullRiskAcceptance"`
+	EnableSimpleRiskAcceptance types.Bool   `tfsdk:"enable_skip_risk_acceptance" ddField:"EnableSimpleRiskAcceptance"`
+	ExternalAudience           types.Bool   `tfsdk:"external_audience" ddField:"ExternalAudience"`
+	InternetAccessible         types.Bool   `tfsdk:"internet_accessible" ddField:"InternetAccessible"`
+	Lifecycle                  types.String `tfsdk:"lifecycle" ddField:"Lifecycle"`
+	Origin                     types.String `tfsdk:"origin" ddField:"Origin"`
+	Platform                   types.String `tfsdk:"platform" ddField:"Platform"`
 	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade"`
 	ProductManagerId           types.Int64  `tfsdk:"product_manager_id"`
 	RegulationIds              []int64      `tfsdk:"regulation_ids"`
-	Revenue                    types.String `tfsdk:"revenue"`
+	Revenue                    types.String `tfsdk:"revenue" ddField:"Revenue"`
 	Tags                       []string     `tfsdk:"tags"`
 	TeamManagerId              types.Int64  `tfsdk:"team_manager_id"`
 	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id"`
@@ -276,47 +277,99 @@ func (d *productResourceData) id() types.String {
 	return d.Id
 }
 
+var typeOfTypesString = reflect.TypeOf(types.String{})
+var typeOfTypesBool = reflect.TypeOf(types.Bool{})
+
 func (d *productResourceData) populate(ddResource defectdojoResource) {
 	tflog.Info(context.Background(), "populate")
 	product := ddResource.(*productDefectdojoResource)
 
+	resourceVal := reflect.ValueOf(d).Elem()
+	resourceType := resourceVal.Type()
+	fmt.Printf("resourceVal: %s\n", resourceVal)
+	fmt.Printf("resourceType: %s\n", resourceType)
+
+	ddVal := reflect.ValueOf(product).Elem()
+
+	for i := 0; i < resourceVal.NumField(); i++ {
+		fieldDescriptor := resourceType.Field(i)
+		fmt.Printf("field: %s\n", fieldDescriptor.Name)
+		tag := fieldDescriptor.Tag
+		ddFieldName := tag.Get("ddField")
+		if ddFieldName != "" {
+			fieldValue := resourceVal.Field(i)
+
+			ddFieldDescriptor, _ := ddVal.Type().FieldByName(ddFieldName)
+			ddFieldValue := ddVal.FieldByName(ddFieldName)
+
+			fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
+			fmt.Printf("fieldDescriptor: Kind = %s, Name = %s, type = %s\n", fieldDescriptor.Type.Kind(), fieldDescriptor.Name, fieldDescriptor.Type)
+
+			// the field we want to set is a `types.String`.
+			switch fieldDescriptor.Type {
+			case typeOfTypesString:
+				if ddFieldDescriptor.Type.Kind() == reflect.String && ddFieldDescriptor.Type.Kind() == reflect.String {
+					// if the source field is a string, we can use it directly
+					fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.String()}))
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.String {
+					// if the source field is a pointer, make sure it's a pointer to a string, and then we can grab the pointed-to value,
+					// but only if the pointer is not nil
+					if !ddFieldValue.IsNil() {
+						fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.Elem().String()}))
+					}
+				}
+			case typeOfTypesBool:
+				if ddFieldDescriptor.Type.Kind() == reflect.Bool && ddFieldDescriptor.Type.Kind() == reflect.Bool {
+					// if the source field is a bool, we can use it directly
+					fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Bool()}))
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Bool {
+					// if the source field is a pointer, make sure it's a pointer to a string, and then we can grab the pointed-to value,
+					// but only if the pointer is not nil
+					if !ddFieldValue.IsNil() {
+						fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Elem().Bool()}))
+					}
+				}
+			}
+		}
+	}
+
 	d.Id = types.String{Value: fmt.Sprint(product.Id)}
-	d.Name = types.String{Value: product.Name}
-	d.Description = types.String{Value: product.Description}
+	//d.Name = types.String{Value: product.Name}
+	//d.Description = types.String{Value: product.Description}
 	d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
 	if product.ProdNumericGrade != nil {
 		d.ProdNumericGrade = types.Int64{Value: int64(*product.ProdNumericGrade)}
 	}
-	if product.BusinessCriticality != nil {
-		d.BusinessCriticality = types.String{Value: string(*product.BusinessCriticality)}
-	}
-	if product.Platform != nil {
-		d.Platform = types.String{Value: string(*product.Platform)}
-	}
-	if product.Lifecycle != nil {
-		d.Lifecycle = types.String{Value: string(*product.Lifecycle)}
-	}
-	if product.Origin != nil {
-		d.Origin = types.String{Value: string(*product.Origin)}
-	}
+	// if product.BusinessCriticality != nil {
+	// 	d.BusinessCriticality = types.String{Value: string(*product.BusinessCriticality)}
+	// }
+	// if product.Platform != nil {
+	// 	d.Platform = types.String{Value: string(*product.Platform)}
+	// }
+	// if product.Lifecycle != nil {
+	// 	d.Lifecycle = types.String{Value: string(*product.Lifecycle)}
+	// }
+	// if product.Origin != nil {
+	// 	d.Origin = types.String{Value: string(*product.Origin)}
+	// }
 	if product.UserRecords != nil {
 		d.UserRecords = types.Int64{Value: int64(*product.UserRecords)}
 	}
-	if product.Revenue != nil {
-		d.Revenue = types.String{Value: string(*product.Revenue)}
-	}
-	if product.ExternalAudience != nil {
-		d.ExternalAudience = types.Bool{Value: bool(*product.ExternalAudience)}
-	}
-	if product.InternetAccessible != nil {
-		d.InternetAccessible = types.Bool{Value: bool(*product.InternetAccessible)}
-	}
-	if product.EnableSimpleRiskAcceptance != nil {
-		d.EnableSimpleRiskAcceptance = types.Bool{Value: bool(*product.EnableSimpleRiskAcceptance)}
-	}
-	if product.EnableFullRiskAcceptance != nil {
-		d.EnableFullRiskAcceptance = types.Bool{Value: bool(*product.EnableFullRiskAcceptance)}
-	}
+	// if product.Revenue != nil {
+	// 	d.Revenue = types.String{Value: string(*product.Revenue)}
+	// }
+	// if product.ExternalAudience != nil {
+	// 	d.ExternalAudience = types.Bool{Value: bool(*product.ExternalAudience)}
+	// }
+	// if product.InternetAccessible != nil {
+	// 	d.InternetAccessible = types.Bool{Value: bool(*product.InternetAccessible)}
+	// }
+	// if product.EnableSimpleRiskAcceptance != nil {
+	// 	d.EnableSimpleRiskAcceptance = types.Bool{Value: bool(*product.EnableSimpleRiskAcceptance)}
+	// }
+	// if product.EnableFullRiskAcceptance != nil {
+	// 	d.EnableFullRiskAcceptance = types.Bool{Value: bool(*product.EnableFullRiskAcceptance)}
+	// }
 	if product.ProductManager != nil {
 		d.ProductManagerId = types.Int64{Value: int64(*product.ProductManager)}
 	}
