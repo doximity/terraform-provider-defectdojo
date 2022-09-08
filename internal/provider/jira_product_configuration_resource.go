@@ -23,10 +23,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.StringType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					stringDefault(""),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"issue_template_dir": {
@@ -34,10 +30,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.StringType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					stringDefault(""),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"push_all_issues": {
@@ -45,10 +37,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.BoolType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"enable_engagement_epic_mapping": {
@@ -56,10 +44,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.BoolType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"push_notes": {
@@ -67,10 +51,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.BoolType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"product_jira_sla_notification": {
@@ -78,10 +58,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.BoolType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"risk_acceptance_expiration_notification": {
@@ -89,10 +65,6 @@ func (t jiraProductConfigurationResourceType) GetSchema(ctx context.Context) (tf
 				Optional:            true,
 				Type:                types.BoolType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 
 			"jira_instance_id": {

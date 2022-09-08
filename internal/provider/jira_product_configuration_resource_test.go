@@ -21,7 +21,7 @@ func TestAccJiraProductConfigurationResource(t *testing.T) {
 				Config: testAccJiraProductConfigurationResourceConfig(name, jirakey),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("defectdojo_jira_product_configuration.test", "project_key", jirakey),
-					resource.TestCheckResourceAttr("defectdojo_jira_product_configuration.test", "issue_template_dir", ""),
+					resource.TestCheckNoResourceAttr("defectdojo_jira_product_configuration.test", "issue_template_dir"),
 					resource.TestCheckResourceAttr("defectdojo_jira_product_configuration.test", "push_all_issues", "false"),
 					resource.TestCheckResourceAttr("defectdojo_jira_product_configuration.test", "enable_engagement_epic_mapping", "false"),
 					resource.TestCheckResourceAttr("defectdojo_jira_product_configuration.test", "push_notes", "false"),

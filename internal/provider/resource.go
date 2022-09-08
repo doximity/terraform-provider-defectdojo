@@ -300,8 +300,21 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						}
 						ddFieldValue.Set(reflect.ValueOf(intVal))
 					}
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Int {
+					srcIsNull := fieldValue.FieldByName("Null").Bool()
+					if !srcIsNull {
+						destType := ddFieldDescriptor.Type.Elem()
+						destVal := reflect.New(destType)
+						str := fieldValue.FieldByName("Value").String()
+						num, err := strconv.Atoi(str)
+						if err != nil {
+							// TODO
+						}
+						destVal.Elem().Set(reflect.ValueOf(num))
+						ddFieldValue.Set(destVal)
+					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
 				}
 
 			case typeOfTypesBool:
@@ -319,7 +332,7 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						ddFieldValue.Set(reflect.New(ddFieldDescriptor.Type).Elem())
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
 				}
 
 			case typeOfTypesInt64:
@@ -340,7 +353,7 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						ddFieldValue.Set(reflect.New(ddFieldDescriptor.Type).Elem())
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
 				}
 
 			case typeOfTypesSet:
@@ -388,11 +401,11 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						}
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 
 			default:
-				fmt.Printf("WARN: Don't know how to assign anything (type was %s) to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+				fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign anything (type was %s) to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
 			}
 		}
 	}
@@ -438,8 +451,14 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 					}
 				} else if ddFieldDescriptor.Type.Kind() == reflect.Int {
 					fieldValue.Set(reflect.ValueOf(types.String{Value: fmt.Sprint(ddFieldValue.Int())}))
+				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Int {
+					if !ddFieldValue.IsNil() {
+						fieldValue.Set(reflect.ValueOf(types.String{Value: fmt.Sprint(ddFieldValue.Elem().Int())}))
+					} else {
+						fieldValue.Set(reflect.ValueOf(types.String{Null: true}))
+					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 
 			case typeOfTypesBool:
@@ -455,7 +474,7 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						fieldValue.Set(reflect.ValueOf(types.Bool{Null: true}))
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 
 			case typeOfTypesInt64:
@@ -471,7 +490,7 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						fieldValue.Set(reflect.ValueOf(types.Int64{Null: true}))
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 
 			case typeOfTypesSet:
@@ -519,10 +538,10 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						}
 					}
 				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 				}
 			default:
-				fmt.Printf("WARN: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+				fmt.Printf("WARN [populateResourceData]: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
 			}
 		}
 	}
