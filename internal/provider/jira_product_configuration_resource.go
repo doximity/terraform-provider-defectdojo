@@ -2,16 +2,12 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	dd "github.com/doximity/defect-dojo-client-go"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
-	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 )
 
 type jiraProductConfigurationResourceType struct{}
@@ -140,17 +136,17 @@ func (t jiraProductConfigurationResourceType) NewResource(ctx context.Context, i
 }
 
 type jiraProductConfigurationResourceData struct {
-	ProjectKey                           types.String `tfsdk:"project_key"`
-	IssueTemplateDir                     types.String `tfsdk:"issue_template_dir"`
-	PushAllIssues                        types.Bool   `tfsdk:"push_all_issues"`
-	EnableEngagementEpicMapping          types.Bool   `tfsdk:"enable_engagement_epic_mapping"`
-	PushNotes                            types.Bool   `tfsdk:"push_notes"`
-	ProductJiraSlaNotification           types.Bool   `tfsdk:"product_jira_sla_notification"`
-	RiskAcceptanceExpirationNotification types.Bool   `tfsdk:"risk_acceptance_expiration_notification"`
-	JiraInstance                         types.String `tfsdk:"jira_instance_id"`
-	Product                              types.String `tfsdk:"product_id"`
-	Engagement                           types.String `tfsdk:"engagement_id"`
-	Id                                   types.String `tfsdk:"id"`
+	ProjectKey                           types.String `tfsdk:"project_key" ddField:"ProjectKey"`
+	IssueTemplateDir                     types.String `tfsdk:"issue_template_dir" ddField:"IssueTemplateDir"`
+	PushAllIssues                        types.Bool   `tfsdk:"push_all_issues" ddField:"PushAllIssues"`
+	EnableEngagementEpicMapping          types.Bool   `tfsdk:"enable_engagement_epic_mapping" ddField:"EnableEngagementEpicMapping"`
+	PushNotes                            types.Bool   `tfsdk:"push_notes" ddField:"PushNotes"`
+	ProductJiraSlaNotification           types.Bool   `tfsdk:"product_jira_sla_notification" ddField:"ProductJiraSlaNotification"`
+	RiskAcceptanceExpirationNotification types.Bool   `tfsdk:"risk_acceptance_expiration_notification" ddField:"RiskAcceptanceExpirationNotification"`
+	JiraInstance                         types.String `tfsdk:"jira_instance_id" ddField:"JiraInstance"`
+	Product                              types.String `tfsdk:"product_id" ddField:"Product"`
+	Engagement                           types.String `tfsdk:"engagement_id" ddField:"Engagement"`
+	Id                                   types.String `tfsdk:"id" ddField:"Id"`
 }
 
 type jiraProductConfigurationDefectdojoResource struct {
@@ -194,100 +190,10 @@ func (d *jiraProductConfigurationResourceData) id() types.String {
 	return d.Id
 }
 
-func (d *jiraProductConfigurationResourceData) populate(ddResource defectdojoResource) {
-	jiraProject := ddResource.(*jiraProductConfigurationDefectdojoResource)
-
-	d.Id = types.String{Value: fmt.Sprint(jiraProject.Id)}
-
-	if jiraProject.Product != nil {
-		d.Product = types.String{Value: fmt.Sprint(*jiraProject.Product)}
-	}
-	if jiraProject.Engagement != nil {
-		d.Engagement = types.String{Value: fmt.Sprint(*jiraProject.Engagement)}
-	}
-	if jiraProject.JiraInstance != nil {
-		d.JiraInstance = types.String{Value: fmt.Sprint(*jiraProject.JiraInstance)}
-	}
-	if jiraProject.RiskAcceptanceExpirationNotification != nil {
-		d.RiskAcceptanceExpirationNotification = types.Bool{Value: *jiraProject.RiskAcceptanceExpirationNotification}
-	}
-	if jiraProject.ProductJiraSlaNotification != nil {
-		d.ProductJiraSlaNotification = types.Bool{Value: *jiraProject.ProductJiraSlaNotification}
-	}
-	if jiraProject.PushNotes != nil {
-		d.PushNotes = types.Bool{Value: *jiraProject.PushNotes}
-	}
-	if jiraProject.EnableEngagementEpicMapping != nil {
-		d.EnableEngagementEpicMapping = types.Bool{Value: *jiraProject.EnableEngagementEpicMapping}
-	}
-	if jiraProject.PushAllIssues != nil {
-		d.PushAllIssues = types.Bool{Value: *jiraProject.PushAllIssues}
-	}
-	if jiraProject.IssueTemplateDir != nil {
-		d.IssueTemplateDir = types.String{Value: *jiraProject.IssueTemplateDir}
-	}
-	if jiraProject.ProjectKey != nil {
-		d.ProjectKey = types.String{Value: *jiraProject.ProjectKey}
-	}
-}
-
 func (d *jiraProductConfigurationResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
-	var productIdNumber, engagementIdNumber, jiraInstanceIdNumber int
-	var err error
-
-	if !d.Product.IsNull() {
-		productIdNumber, err = strconv.Atoi(d.Product.Value)
-		if err != nil {
-			diags.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Product ID from state: %s", err))
-			return nil, err
-		}
-	}
-	if !d.Engagement.IsNull() {
-		engagementIdNumber, err = strconv.Atoi(d.Engagement.Value)
-		if err != nil {
-			diags.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Engagement ID from state: %s", err))
-			return nil, err
-		}
-	}
-	if !d.JiraInstance.IsNull() {
-		jiraInstanceIdNumber, err = strconv.Atoi(d.JiraInstance.Value)
-		if err != nil {
-			diags.AddError(
-				"Could not Create Resource",
-				fmt.Sprintf("Error while parsing the Jira Instance ID from state: %s", err))
-			return nil, err
-		}
-	}
-
-	ret := dd.JIRAProject{
-		RiskAcceptanceExpirationNotification: ref.Of(d.RiskAcceptanceExpirationNotification.Value),
-		ProductJiraSlaNotification:           ref.Of(d.ProductJiraSlaNotification.Value),
-		PushNotes:                            ref.Of(d.PushNotes.Value),
-		EnableEngagementEpicMapping:          ref.Of(d.EnableEngagementEpicMapping.Value),
-		PushAllIssues:                        ref.Of(d.PushAllIssues.Value),
-		IssueTemplateDir:                     ref.Of(d.IssueTemplateDir.Value),
-		ProjectKey:                           ref.Of(d.ProjectKey.Value),
-	}
-
-	if productIdNumber != 0 {
-		ret.Product = ref.Of(productIdNumber)
-	}
-	if engagementIdNumber != 0 {
-		ret.Engagement = ref.Of(engagementIdNumber)
-	}
-	if jiraInstanceIdNumber != 0 {
-		ret.JiraInstance = ref.Of(jiraInstanceIdNumber)
-	}
-
-	ddResource := jiraProductConfigurationDefectdojoResource{
-		JIRAProject: ret,
-	}
-
-	return &ddResource, nil
+	return &jiraProductConfigurationDefectdojoResource{
+		JIRAProject: dd.JIRAProject{},
+	}, nil
 }
 
 type jiraProductConfigurationResource struct {

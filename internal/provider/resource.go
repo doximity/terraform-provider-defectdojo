@@ -400,14 +400,13 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 
 func populateResourceData(d *terraformResourceData, ddResource defectdojoResource) {
 	tflog.Info(context.Background(), "populateResourceData")
-	product := ddResource.(*productDefectdojoResource)
 
 	resourceVal := reflect.ValueOf(*d).Elem()
 	resourceType := resourceVal.Type()
 	// fmt.Printf("resourceVal: %s\n", resourceVal)
 	// fmt.Printf("resourceType: %s\n", resourceType)
 
-	ddVal := reflect.ValueOf(product).Elem()
+	ddVal := reflect.ValueOf(ddResource).Elem()
 
 	for i := 0; i < resourceVal.NumField(); i++ {
 		fieldDescriptor := resourceType.Field(i)

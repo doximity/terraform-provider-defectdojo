@@ -2,10 +2,8 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	dd "github.com/doximity/defect-dojo-client-go"
-	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -57,9 +55,9 @@ func (t productTypeResourceType) NewResource(ctx context.Context, in tfsdk.Provi
 }
 
 type productTypeResourceData struct {
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name" ddField:"Name"`
+	Description types.String `tfsdk:"description" ddField:"Description"`
+	Id          types.String `tfsdk:"id" ddField:"Id"`
 }
 
 type productTypeDefectdojoResource struct {
@@ -115,21 +113,8 @@ func (d *productTypeResourceData) id() types.String {
 	return d.Id
 }
 
-func (d *productTypeResourceData) populate(ddResource defectdojoResource) {
-	product := ddResource.(*productTypeDefectdojoResource)
-	d.Id = types.String{Value: fmt.Sprint(product.Id)}
-	d.Name = types.String{Value: product.Name}
-	if product.Description != nil {
-		d.Description = types.String{Value: *product.Description}
-	}
-}
-
 func (d *productTypeResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
-	productType := dd.ProductType{
-		Description: ref.Of(d.Description.Value),
-		Name:        d.Name.Value,
-	}
 	return &productTypeDefectdojoResource{
-		ProductType: productType,
+		ProductType: dd.ProductType{},
 	}, nil
 }
