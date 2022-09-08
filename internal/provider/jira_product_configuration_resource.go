@@ -162,10 +162,10 @@ func (d *jiraProductConfigurationResourceData) id() types.String {
 	return d.Id
 }
 
-func (d *jiraProductConfigurationResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
+func (d *jiraProductConfigurationResourceData) defectdojoResource() defectdojoResource {
 	return &jiraProductConfigurationDefectdojoResource{
 		JIRAProject: dd.JIRAProject{},
-	}, nil
+	}
 }
 
 type jiraProductConfigurationResource struct {

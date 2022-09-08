@@ -113,8 +113,8 @@ func (d *productTypeResourceData) id() types.String {
 	return d.Id
 }
 
-func (d *productTypeResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
+func (d *productTypeResourceData) defectdojoResource() defectdojoResource {
 	return &productTypeDefectdojoResource{
 		ProductType: dd.ProductType{},
-	}, nil
+	}
 }

@@ -16,7 +16,7 @@ import (
 
 type terraformResourceData interface {
 	id() types.String
-	defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error)
+	defectdojoResource() defectdojoResource
 }
 
 type defectdojoResource interface {
@@ -54,11 +54,8 @@ func (r terraformResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 		return
 	}
 
-	ddResource, err := data.defectdojoResource(&resp.Diagnostics)
-	if err != nil {
-		return
-	}
-	populateDefectdojoResource(data, &ddResource)
+	ddResource := data.defectdojoResource()
+	populateDefectdojoResource(ctx, &diags, data, &ddResource)
 
 	statusCode, body, err := ddResource.createApiCall(ctx, r.provider)
 
@@ -70,7 +67,7 @@ func (r terraformResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 	}
 
 	if statusCode == 201 {
-		populateResourceData(&data, ddResource)
+		populateResourceData(ctx, &diags, &data, ddResource)
 	} else {
 		resp.Diagnostics.AddError(
 			"API Error Creating Resource",
@@ -109,11 +106,8 @@ func (r terraformResource) Read(ctx context.Context, req tfsdk.ReadResourceReque
 		return
 	}
 
-	ddResource, err := data.defectdojoResource(&resp.Diagnostics)
-	if err != nil {
-		return
-	}
-	populateDefectdojoResource(data, &ddResource)
+	ddResource := data.defectdojoResource()
+	populateDefectdojoResource(ctx, &diags, data, &ddResource)
 
 	statusCode, body, err := ddResource.readApiCall(ctx, r.provider, idNumber)
 	if err != nil {
@@ -124,7 +118,7 @@ func (r terraformResource) Read(ctx context.Context, req tfsdk.ReadResourceReque
 	}
 
 	if statusCode == 200 {
-		populateResourceData(&data, ddResource)
+		populateResourceData(ctx, &diags, &data, ddResource)
 	} else if statusCode == 404 {
 		resp.State.RemoveResource(ctx)
 		return
@@ -165,11 +159,8 @@ func (r terraformResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		return
 	}
 
-	ddResource, err := data.defectdojoResource(&resp.Diagnostics)
-	if err != nil {
-		return
-	}
-	populateDefectdojoResource(data, &ddResource)
+	ddResource := data.defectdojoResource()
+	populateDefectdojoResource(ctx, &diags, data, &ddResource)
 
 	statusCode, body, err := ddResource.updateApiCall(ctx, r.provider, idNumber)
 
@@ -181,7 +172,7 @@ func (r terraformResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 	}
 
 	if statusCode == 200 {
-		populateResourceData(&data, ddResource)
+		populateResourceData(ctx, &diags, &data, ddResource)
 	} else {
 		resp.Diagnostics.AddError(
 			"API Error Updating Resource",
@@ -218,10 +209,7 @@ func (r terraformResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 		return
 	}
 
-	ddResource, err := data.defectdojoResource(&resp.Diagnostics)
-	if err != nil {
-		return
-	}
+	ddResource := data.defectdojoResource()
 
 	statusCode, body, err := ddResource.deleteApiCall(ctx, r.provider, idNumber)
 	if err != nil {
@@ -247,8 +235,7 @@ func (r terraformResource) ImportState(ctx context.Context, req tfsdk.ImportReso
 	tfsdk.ResourceImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func populateDefectdojoResource(resourceData terraformResourceData, ddResource *defectdojoResource) {
-
+func populateDefectdojoResource(ctx context.Context, diags *diag.Diagnostics, resourceData terraformResourceData, ddResource *defectdojoResource) {
 	resourceVal := reflect.ValueOf(resourceData).Elem()
 	resourceType := resourceVal.Type()
 	// fmt.Printf("resourceVal: %s\n", resourceVal)
@@ -262,7 +249,11 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 		ddFieldName := tag.Get("ddField")
 		if ddFieldName != "" {
 			fieldValue := resourceVal.Field(i)
-			ddFieldDescriptor, _ := ddVal.Type().FieldByName(ddFieldName)
+			ddFieldDescriptor, ok := ddVal.Type().FieldByName(ddFieldName)
+			if !ok {
+				diags.AddError("Error: No such field", fmt.Sprintf("A field named %s was specified to look sync data from the defectdojo client type, but no such field was found.", ddFieldName))
+				continue
+			}
 			ddFieldValue := ddVal.FieldByName(ddFieldName)
 
 			// fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
@@ -289,18 +280,23 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						ddFieldValue.Set(destVal)
 					}
 				} else if ddFieldDescriptor.Type.Kind() == reflect.Int {
+					// the destination field is an int
 					srcIsNull := fieldValue.FieldByName("Null").Bool()
 					zero := 0
 					if !srcIsNull {
 						srcVal := fieldValue.FieldByName("Value")
 						strVal := srcVal.Interface().(string)
 						intVal, err := strconv.Atoi(strVal)
-						if err == nil {
-							ddFieldValue.Set(reflect.ValueOf(zero))
+
+						if err != nil {
+							diags.AddError("Error converting value", fmt.Sprintf("Could not convert string value %s to *int: %e", strVal, err))
+							continue
 						}
+						ddFieldValue.Set(reflect.ValueOf(zero))
 						ddFieldValue.Set(reflect.ValueOf(intVal))
 					}
 				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Int {
+					// the destination field is a *int
 					srcIsNull := fieldValue.FieldByName("Null").Bool()
 					if !srcIsNull {
 						destType := ddFieldDescriptor.Type.Elem()
@@ -308,13 +304,14 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						str := fieldValue.FieldByName("Value").String()
 						num, err := strconv.Atoi(str)
 						if err != nil {
-							// TODO
+							diags.AddError("Error converting value", fmt.Sprintf("Could not convert string value %s to *int: %e", str, err))
+							continue
 						}
 						destVal.Elem().Set(reflect.ValueOf(num))
 						ddFieldValue.Set(destVal)
 					}
 				} else {
-					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type))
 				}
 
 			case typeOfTypesBool:
@@ -332,7 +329,7 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						ddFieldValue.Set(reflect.New(ddFieldDescriptor.Type).Elem())
 					}
 				} else {
-					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type))
 				}
 
 			case typeOfTypesInt64:
@@ -353,7 +350,7 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						ddFieldValue.Set(reflect.New(ddFieldDescriptor.Type).Elem())
 					}
 				} else {
-					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type))
 				}
 
 			case typeOfTypesSet:
@@ -369,7 +366,11 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 							ddFieldValue.Set(destVal)
 						} else {
 							int64s := []int64{}
-							_ = fieldValue.Interface().(types.Set).ElementsAs(context.Background(), &int64s, false)
+							diags_ := fieldValue.Interface().(types.Set).ElementsAs(context.Background(), &int64s, false)
+							if len(diags_) > 0 {
+								diags.Append(diags_...)
+								continue
+							}
 							ints := []int{}
 							for _, val := range int64s {
 								ints = append(ints, (int)(val))
@@ -391,7 +392,11 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 							ddFieldValue.Set(destVal)
 						} else {
 							strings := []string{}
-							_ = fieldValue.Interface().(types.Set).ElementsAs(context.Background(), &strings, false)
+							diags_ := fieldValue.Interface().(types.Set).ElementsAs(context.Background(), &strings, false)
+							if len(diags_) > 0 {
+								diags.Append(diags_...)
+								continue
+							}
 							if strings == nil {
 								strings = make([]string, 0)
 							}
@@ -401,17 +406,17 @@ func populateDefectdojoResource(resourceData terraformResourceData, ddResource *
 						}
 					}
 				} else {
-					fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateDefectdojoResource]: Don't know how to assign type %s to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type))
 				}
 
 			default:
-				fmt.Printf("WARN [populateDefectdojoResource]: Don't know how to assign anything (type was %s) to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type)
+				tflog.Warn(ctx, fmt.Sprintf("WARN [populateDefectdojoResource]: Don't know how to assign anything (type was %s) to type %s\n", fieldDescriptor.Type, ddFieldDescriptor.Type))
 			}
 		}
 	}
 }
 
-func populateResourceData(d *terraformResourceData, ddResource defectdojoResource) {
+func populateResourceData(ctx context.Context, diags *diag.Diagnostics, d *terraformResourceData, ddResource defectdojoResource) {
 	tflog.Info(context.Background(), "populateResourceData")
 
 	resourceVal := reflect.ValueOf(*d).Elem()
@@ -429,7 +434,11 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 		if ddFieldName != "" {
 			fieldValue := resourceVal.Field(i)
 
-			ddFieldDescriptor, _ := ddVal.Type().FieldByName(ddFieldName)
+			ddFieldDescriptor, ok := ddVal.Type().FieldByName(ddFieldName)
+			if !ok {
+				diags.AddError("Error: No such field", fmt.Sprintf("A field named %s was specified to look sync data from the defectdojo client type, but no such field was found.", ddFieldName))
+				continue
+			}
 			ddFieldValue := ddVal.FieldByName(ddFieldName)
 
 			// fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
@@ -458,7 +467,7 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						fieldValue.Set(reflect.ValueOf(types.String{Null: true}))
 					}
 				} else {
-					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type))
 				}
 
 			case typeOfTypesBool:
@@ -474,7 +483,7 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						fieldValue.Set(reflect.ValueOf(types.Bool{Null: true}))
 					}
 				} else {
-					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type))
 				}
 
 			case typeOfTypesInt64:
@@ -490,7 +499,7 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						fieldValue.Set(reflect.ValueOf(types.Int64{Null: true}))
 					}
 				} else {
-					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type))
 				}
 
 			case typeOfTypesSet:
@@ -538,10 +547,10 @@ func populateResourceData(d *terraformResourceData, ddResource defectdojoResourc
 						}
 					}
 				} else {
-					fmt.Printf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+					tflog.Warn(ctx, fmt.Sprintf("WARN [populateResourceData]: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type))
 				}
 			default:
-				fmt.Printf("WARN [populateResourceData]: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
+				tflog.Warn(ctx, fmt.Sprintf("WARN [populateResourceData]: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type))
 			}
 		}
 	}
