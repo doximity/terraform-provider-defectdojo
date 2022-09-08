@@ -3,14 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"regexp"
 
 	dd "github.com/doximity/defect-dojo-client-go"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -271,144 +269,6 @@ func (r productDataProvider) getData(ctx context.Context, getter dataGetter) (te
 
 func (d *productResourceData) id() types.String {
 	return d.Id
-}
-
-var typeOfTypesString = reflect.TypeOf(types.String{})
-var typeOfTypesBool = reflect.TypeOf(types.Bool{})
-var typeOfTypesInt64 = reflect.TypeOf(types.Int64{})
-var typeOfStringSlice = reflect.TypeOf([]string{})
-var typeOfInt64Slice = reflect.TypeOf([]int64{})
-var typeOfTypesSet = reflect.TypeOf(types.Set{})
-
-func (d *productResourceData) populate(ddResource defectdojoResource) {
-	tflog.Info(context.Background(), "populate")
-	product := ddResource.(*productDefectdojoResource)
-
-	resourceVal := reflect.ValueOf(d).Elem()
-	resourceType := resourceVal.Type()
-	// fmt.Printf("resourceVal: %s\n", resourceVal)
-	// fmt.Printf("resourceType: %s\n", resourceType)
-
-	ddVal := reflect.ValueOf(product).Elem()
-
-	for i := 0; i < resourceVal.NumField(); i++ {
-		fieldDescriptor := resourceType.Field(i)
-		// fmt.Printf("field: %s\n", fieldDescriptor.Name)
-		tag := fieldDescriptor.Tag
-		ddFieldName := tag.Get("ddField")
-		if ddFieldName != "" {
-			fieldValue := resourceVal.Field(i)
-
-			ddFieldDescriptor, _ := ddVal.Type().FieldByName(ddFieldName)
-			ddFieldValue := ddVal.FieldByName(ddFieldName)
-
-			// fmt.Printf("ddFieldDescriptor: Kind = %s, Name = %s\n", ddFieldDescriptor.Type.Kind(), ddFieldDescriptor.Name)
-			// fmt.Printf("fieldDescriptor: Kind = %s, Name = %s, type = %s\n", fieldDescriptor.Type.Kind(), fieldDescriptor.Name, fieldDescriptor.Type)
-
-			switch fieldDescriptor.Type {
-
-			case typeOfTypesString:
-				if ddFieldDescriptor.Type.Kind() == reflect.String {
-					// if the source field is a string, we can use it directly
-					fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.String()}))
-				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.String {
-					// if the source field is a pointer, make sure it's a pointer to a string, and then we can grab the pointed-to value,
-					// but only if the pointer is not nil
-					if !ddFieldValue.IsNil() {
-						fieldValue.Set(reflect.ValueOf(types.String{Value: ddFieldValue.Elem().String()}))
-					} else {
-						fieldValue.Set(reflect.ValueOf(types.String{Null: true}))
-					}
-				} else if ddFieldDescriptor.Type.Kind() == reflect.Int {
-					fieldValue.Set(reflect.ValueOf(types.String{Value: fmt.Sprint(ddFieldValue.Int())}))
-				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
-				}
-
-			case typeOfTypesBool:
-				if ddFieldDescriptor.Type.Kind() == reflect.Bool {
-					// if the source field is a bool, we can use it directly
-					fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Bool()}))
-				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Bool {
-					// if the source field is a pointer, make sure it's a pointer to a bool, and then we can grab the pointed-to value,
-					// but only if the pointer is not nil
-					if !ddFieldValue.IsNil() {
-						fieldValue.Set(reflect.ValueOf(types.Bool{Value: ddFieldValue.Elem().Bool()}))
-					} else {
-						fieldValue.Set(reflect.ValueOf(types.Bool{Null: true}))
-					}
-				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
-				}
-
-			case typeOfTypesInt64:
-				if ddFieldDescriptor.Type.Kind() == reflect.Int64 || ddFieldDescriptor.Type.Kind() == reflect.Int {
-					// if the source field is an int or int64, we can cast and use it directly
-					fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Int())}))
-				} else if ddFieldDescriptor.Type.Kind() == reflect.Ptr && (ddFieldDescriptor.Type.Elem().Kind() == reflect.Int64 || ddFieldDescriptor.Type.Elem().Kind() == reflect.Int) {
-					// if the source field is a pointer, make sure it's a pointer to an int64, and then we can grab the pointed-to value,
-					// but only if the pointer is not nil
-					if !ddFieldValue.IsNil() {
-						fieldValue.Set(reflect.ValueOf(types.Int64{Value: (int64)(ddFieldValue.Elem().Int())}))
-					} else {
-						fieldValue.Set(reflect.ValueOf(types.Int64{Null: true}))
-					}
-				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
-				}
-
-			case typeOfTypesSet:
-				if ddFieldDescriptor.Type.Kind() == reflect.Ptr && ddFieldDescriptor.Type.Elem().Kind() == reflect.Slice {
-					// the source field is a pointer to a slice
-					if ddFieldDescriptor.Type.Elem().Elem().Kind() == reflect.Int {
-						// it's a slice of int
-
-						if !ddFieldValue.IsZero() && (ddFieldValue.Elem().Len() > 0 || !fieldValue.FieldByName("Null").Bool()) {
-							elems := []attr.Value{}
-							for _, val := range ddFieldValue.Elem().Interface().([]int) {
-								elems = append(elems, types.Int64{Value: (int64)(val)})
-							}
-							destVal := types.Set{
-								ElemType: types.Int64Type,
-								Elems:    elems,
-							}
-							fieldValue.Set(reflect.ValueOf(destVal))
-						} else {
-							destVal := types.Set{
-								ElemType: types.Int64Type,
-								Null:     true,
-							}
-							fieldValue.Set(reflect.ValueOf(destVal))
-						}
-					} else if ddFieldDescriptor.Type.Elem().Elem().Kind() == reflect.String {
-						// it's a slice of string
-
-						if !ddFieldValue.IsZero() && (ddFieldValue.Elem().Len() > 0 || !fieldValue.FieldByName("Null").Bool()) {
-							elems := []attr.Value{}
-							for _, val := range ddFieldValue.Elem().Interface().([]string) {
-								elems = append(elems, types.String{Value: (string)(val)})
-							}
-							destVal := types.Set{
-								ElemType: types.StringType,
-								Elems:    elems,
-							}
-							fieldValue.Set(reflect.ValueOf(destVal))
-						} else {
-							destVal := types.Set{
-								ElemType: types.StringType,
-								Null:     true,
-							}
-							fieldValue.Set(reflect.ValueOf(destVal))
-						}
-					}
-				} else {
-					fmt.Printf("WARN: Don't know how to assign type %s to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
-				}
-			default:
-				fmt.Printf("WARN: Don't know how to assign anything (type was %s) to type %s\n", ddFieldDescriptor.Type, fieldDescriptor.Type)
-			}
-		}
-	}
 }
 
 func (d *productResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
