@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestProductResourcePopulate(t *testing.T) {
 	productResource := productResourceData{}
 	var terraformResource terraformResourceData = &productResource
 
-	populateResourceData(&terraformResource, &ddProduct)
+	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
 	assert.Equal(t, productResource.Id.Value, fmt.Sprint(expectedId))
 	assert.Equal(t, productResource.Description.Value, expectedDescription)
 	assert.Equal(t, productResource.Name.Value, expectedName)
@@ -107,7 +108,7 @@ func TestProductResourcePopulate(t *testing.T) {
 	ddProduct = productDefectdojoResource{
 		Product: dd.Product{},
 	}
-	populateResourceData(&terraformResource, &ddProduct)
+	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
 
 	nilStringSet := types.Set{Null: true, ElemType: types.StringType}
 	nilInt64Set := types.Set{Null: true, ElemType: types.Int64Type}
@@ -166,7 +167,7 @@ func TestProductResourcePopulateNils(t *testing.T) {
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{},
 	}
-	populateResourceData(&terraformResource, &ddProduct)
+	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
 
 	// still all empty/null values after running populate
 	assert.Equal(t, productResource.Description.Value, "")
@@ -259,10 +260,10 @@ func TestProductResource__defectdojoResource(t *testing.T) {
 		RegulationIds: expectedRegulationsSet,
 	}
 
-	ddResource, _ := productResource.defectdojoResource(&diag.Diagnostics{})
+	ddResource := productResource.defectdojoResource()
 	ddProduct := ddResource.(*productDefectdojoResource)
 	var terraformResource terraformResourceData = &productResource
-	populateDefectdojoResource(terraformResource, &ddResource)
+	populateDefectdojoResource(context.Background(), &diag.Diagnostics{}, terraformResource, &ddResource)
 
 	//assert.Equal(t, ddProduct.Id, expectedId)
 	assert.Equal(t, ddProduct.Name, expectedName)
@@ -327,10 +328,10 @@ func TestProductResource__defectdojoResource_Nulls(t *testing.T) {
 		RegulationIds: types.Set{Null: true},
 	}
 
-	ddResource, _ := productResource.defectdojoResource(&diag.Diagnostics{})
+	ddResource := productResource.defectdojoResource()
 	ddProduct := ddResource.(*productDefectdojoResource)
 	var terraformResource terraformResourceData = &productResource
-	populateDefectdojoResource(terraformResource, &ddResource)
+	populateDefectdojoResource(context.Background(), &diag.Diagnostics{}, terraformResource, &ddResource)
 
 	assert.Equal(t, ddProduct.Id, 0)
 	assert.Equal(t, ddProduct.Name, "")
