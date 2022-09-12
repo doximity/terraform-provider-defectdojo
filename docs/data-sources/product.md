@@ -23,12 +23,28 @@ data "defectdojo_product" "example" {
 
 ### Optional
 
+- `business_criticality` (String) The Business Criticality of the Product. Valid values are: 'very high', 'high', 'medium', 'low', 'very low', 'none'
 - `id` (String) Identifier
+- `prod_numeric_grade` (Number) The Numeric Grade of the Product
 
 ### Read-Only
 
 - `description` (String) The description of the Product
+- `enable_full_risk_acceptance` (Boolean) Allows full risk acceptance using a risk acceptance form, expiration date, uploaded proof, etc.
+- `enable_skip_risk_acceptance` (Boolean) Allows simple risk acceptance by checking/unchecking a checkbox.
+- `external_audience` (Boolean) Specify if the application is used by people outside the organization.
+- `internet_accessible` (Boolean) Specify if the application is accessible from the public internet.
+- `lifecycle` (String) The Lifecycle state of the Product. Valid values are: 'construction', 'production', 'retirement'
 - `name` (String) The name of the Product
+- `origin` (String) The Origin of the Product. Valid values are: 'third party library', 'purchased', 'contractor', 'internal', 'open source', 'outsourced'
+- `platform` (String) The Platform of the Product. Valid values are: 'web service', 'desktop', 'iot', 'mobile', 'web'
+- `product_manager_id` (Number) The ID of the user who is the PM for this product.
 - `product_type_id` (Number) The ID of the Product Type
+- `regulation_ids` (Set of Number) The IDs of the Regulations which apply to this product.
+- `revenue` (String) Estimate the application's revenue.
+- `tags` (Set of String) Tags to apply to the product
+- `team_manager_id` (Number) The ID of the user who is the manager for this product.
+- `technical_contact_id` (Number) The ID of the user who is the technical contact for this product.
+- `user_records` (Number) Estimate the number of user records within the application.
 
 

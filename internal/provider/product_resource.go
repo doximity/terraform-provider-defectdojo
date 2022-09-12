@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	dd "github.com/doximity/defect-dojo-client-go"
-	"github.com/doximity/terraform-provider-defectdojo/internal/ref"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -97,7 +96,6 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"internet_accessible": {
@@ -107,7 +105,6 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"enable_skip_risk_acceptance": {
@@ -117,7 +114,6 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"enable_full_risk_acceptance": {
@@ -127,7 +123,6 @@ func (t productResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Computed:            true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					boolDefault(false),
-					tfsdk.UseStateForUnknown(),
 				},
 			},
 			"product_manager_id": {
@@ -193,26 +188,26 @@ func (t productResourceType) NewResource(ctx context.Context, in tfsdk.Provider)
 }
 
 type productResourceData struct {
-	Name                       types.String `tfsdk:"name"`
-	Description                types.String `tfsdk:"description"`
-	ProductTypeId              types.Int64  `tfsdk:"product_type_id"`
-	Id                         types.String `tfsdk:"id"`
-	BusinessCriticality        types.String `tfsdk:"business_criticality"`
-	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance"`
-	EnableSimpleRiskAcceptance types.Bool   `tfsdk:"enable_skip_risk_acceptance"`
-	ExternalAudience           types.Bool   `tfsdk:"external_audience"`
-	InternetAccessible         types.Bool   `tfsdk:"internet_accessible"`
-	Lifecycle                  types.String `tfsdk:"lifecycle"`
-	Origin                     types.String `tfsdk:"origin"`
-	Platform                   types.String `tfsdk:"platform"`
-	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade"`
-	ProductManagerId           types.Int64  `tfsdk:"product_manager_id"`
-	RegulationIds              []int64      `tfsdk:"regulation_ids"`
-	Revenue                    types.String `tfsdk:"revenue"`
-	Tags                       []string     `tfsdk:"tags"`
-	TeamManagerId              types.Int64  `tfsdk:"team_manager_id"`
-	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id"`
-	UserRecords                types.Int64  `tfsdk:"user_records"`
+	Name                       types.String `tfsdk:"name" ddField:"Name"`
+	Description                types.String `tfsdk:"description" ddField:"Description"`
+	ProductTypeId              types.Int64  `tfsdk:"product_type_id" ddField:"ProdType"`
+	Id                         types.String `tfsdk:"id" ddField:"Id"`
+	BusinessCriticality        types.String `tfsdk:"business_criticality" ddField:"BusinessCriticality"`
+	EnableFullRiskAcceptance   types.Bool   `tfsdk:"enable_full_risk_acceptance" ddField:"EnableFullRiskAcceptance"`
+	EnableSimpleRiskAcceptance types.Bool   `tfsdk:"enable_skip_risk_acceptance" ddField:"EnableSimpleRiskAcceptance"`
+	ExternalAudience           types.Bool   `tfsdk:"external_audience" ddField:"ExternalAudience"`
+	InternetAccessible         types.Bool   `tfsdk:"internet_accessible" ddField:"InternetAccessible"`
+	Lifecycle                  types.String `tfsdk:"lifecycle" ddField:"Lifecycle"`
+	Origin                     types.String `tfsdk:"origin" ddField:"Origin"`
+	Platform                   types.String `tfsdk:"platform" ddField:"Platform"`
+	ProdNumericGrade           types.Int64  `tfsdk:"prod_numeric_grade" ddField:"ProdNumericGrade"`
+	ProductManagerId           types.Int64  `tfsdk:"product_manager_id" ddField:"ProductManager"`
+	RegulationIds              types.Set    `tfsdk:"regulation_ids" ddField:"Regulations"`
+	Revenue                    types.String `tfsdk:"revenue" ddField:"Revenue"`
+	Tags                       types.Set    `tfsdk:"tags" ddField:"Tags"`
+	TeamManagerId              types.Int64  `tfsdk:"team_manager_id" ddField:"TeamManager"`
+	TechnicalContactId         types.Int64  `tfsdk:"technical_contact_id" ddField:"TechnicalContact"`
+	UserRecords                types.Int64  `tfsdk:"user_records" ddField:"UserRecords"`
 }
 
 type productDefectdojoResource struct {
@@ -276,141 +271,8 @@ func (d *productResourceData) id() types.String {
 	return d.Id
 }
 
-func (d *productResourceData) populate(ddResource defectdojoResource) {
-	tflog.Info(context.Background(), "populate")
-	product := ddResource.(*productDefectdojoResource)
-
-	d.Id = types.String{Value: fmt.Sprint(product.Id)}
-	d.Name = types.String{Value: product.Name}
-	d.Description = types.String{Value: product.Description}
-	d.ProductTypeId = types.Int64{Value: int64(product.ProdType)}
-	if product.ProdNumericGrade != nil {
-		d.ProdNumericGrade = types.Int64{Value: int64(*product.ProdNumericGrade)}
-	}
-	if product.BusinessCriticality != nil {
-		d.BusinessCriticality = types.String{Value: string(*product.BusinessCriticality)}
-	}
-	if product.Platform != nil {
-		d.Platform = types.String{Value: string(*product.Platform)}
-	}
-	if product.Lifecycle != nil {
-		d.Lifecycle = types.String{Value: string(*product.Lifecycle)}
-	}
-	if product.Origin != nil {
-		d.Origin = types.String{Value: string(*product.Origin)}
-	}
-	if product.UserRecords != nil {
-		d.UserRecords = types.Int64{Value: int64(*product.UserRecords)}
-	}
-	if product.Revenue != nil {
-		d.Revenue = types.String{Value: string(*product.Revenue)}
-	}
-	if product.ExternalAudience != nil {
-		d.ExternalAudience = types.Bool{Value: bool(*product.ExternalAudience)}
-	}
-	if product.InternetAccessible != nil {
-		d.InternetAccessible = types.Bool{Value: bool(*product.InternetAccessible)}
-	}
-	if product.EnableSimpleRiskAcceptance != nil {
-		d.EnableSimpleRiskAcceptance = types.Bool{Value: bool(*product.EnableSimpleRiskAcceptance)}
-	}
-	if product.EnableFullRiskAcceptance != nil {
-		d.EnableFullRiskAcceptance = types.Bool{Value: bool(*product.EnableFullRiskAcceptance)}
-	}
-	if product.ProductManager != nil {
-		d.ProductManagerId = types.Int64{Value: int64(*product.ProductManager)}
-	}
-	if product.TechnicalContact != nil {
-		d.TechnicalContactId = types.Int64{Value: int64(*product.TechnicalContact)}
-	}
-	if product.TeamManager != nil {
-		d.TeamManagerId = types.Int64{Value: int64(*product.TeamManager)}
-	}
-	if product.Regulations != nil && len(*product.Regulations) > 0 {
-		var ids []int64
-		for _, r := range *product.Regulations {
-			ids = append(ids, int64(r))
-		}
-		d.RegulationIds = ids
-		// must set to empty [] by default because
-		// the API does
-		if len(ids) == 0 {
-			d.RegulationIds = make([]int64, 0)
-		}
-	}
-	if product.Tags != nil {
-		var tags []string
-		for _, t := range *product.Tags {
-			tags = append(tags, string(t))
-		}
-		d.Tags = tags
-		// don't set to empty [] by default because
-		// the API doesn't
-	}
-}
-
-func (d *productResourceData) defectdojoResource(diags *diag.Diagnostics) (defectdojoResource, error) {
-	tflog.Info(context.Background(), "defectdojoResource")
-	product := dd.Product{
-		ProdType:    int(d.ProductTypeId.Value),
-		Description: d.Description.Value,
-		Name:        d.Name.Value,
-	}
-
-	if !d.BusinessCriticality.IsNull() {
-		product.BusinessCriticality = (*dd.ProductBusinessCriticality)(&d.BusinessCriticality.Value)
-	}
-	if !d.EnableFullRiskAcceptance.IsNull() {
-		product.EnableFullRiskAcceptance = &d.EnableFullRiskAcceptance.Value
-	}
-	if !d.EnableSimpleRiskAcceptance.IsNull() {
-		product.EnableSimpleRiskAcceptance = &d.EnableSimpleRiskAcceptance.Value
-	}
-	if !d.ExternalAudience.IsNull() {
-		product.ExternalAudience = &d.ExternalAudience.Value
-	}
-	if !d.InternetAccessible.IsNull() {
-		product.InternetAccessible = &d.InternetAccessible.Value
-	}
-	if !d.Lifecycle.IsNull() {
-		product.Lifecycle = (*dd.ProductLifecycle)(&d.Lifecycle.Value)
-	}
-	if !d.Origin.IsNull() {
-		product.Origin = (*dd.ProductOrigin)(&d.Origin.Value)
-	}
-	if !d.Platform.IsNull() {
-		product.Platform = (*dd.ProductPlatform)(&d.Platform.Value)
-	}
-	if !d.ProdNumericGrade.IsNull() {
-		product.ProdNumericGrade = ref.Of(int(d.ProdNumericGrade.Value))
-	}
-	if !d.ProductManagerId.IsNull() {
-		product.ProductManager = ref.Of(int(d.ProductManagerId.Value))
-	}
-	if !d.Revenue.IsNull() {
-		product.Revenue = &d.Revenue.Value
-	}
-	if !d.TeamManagerId.IsNull() {
-		product.TeamManager = ref.Of(int(d.TeamManagerId.Value))
-	}
-	if !d.TechnicalContactId.IsNull() {
-		product.TechnicalContact = ref.Of(int(d.TechnicalContactId.Value))
-	}
-	if !d.UserRecords.IsNull() {
-		product.UserRecords = ref.Of(int(d.UserRecords.Value))
-	}
-	if len(d.RegulationIds) != 0 {
-		var ids []int
-		for _, id := range d.RegulationIds {
-			ids = append(ids, int(id))
-		}
-		product.Regulations = &ids
-	}
-	if len(d.Tags) != 0 {
-		product.Tags = &d.Tags
-	}
-
+func (d *productResourceData) defectdojoResource() defectdojoResource {
 	return &productDefectdojoResource{
-		Product: product,
-	}, nil
+		Product: dd.Product{},
+	}
 }
