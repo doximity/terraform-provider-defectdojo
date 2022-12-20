@@ -35,25 +35,25 @@ func TestProductResourcePopulate(t *testing.T) {
 	expectedUserRecords := 47
 
 	expectedTags := []string{"foo", "bar", "baz"}
-	expectedTagsSet := types.Set{
-		ElemType: types.StringType,
-		Elems: []attr.Value{
-			types.String{Value: "foo"},
-			types.String{Value: "bar"},
-			types.String{Value: "baz"},
+	expectedTagsSet := types.SetValueMust(
+		types.StringType,
+		[]attr.Value{
+			types.StringValue("foo"),
+			types.StringValue("bar"),
+			types.StringValue("baz"),
 		},
-	}
+	)
 
 	expectedRegulations := []int{99, 100, 101}
 
-	expectedRegulationsSet := types.Set{
-		ElemType: types.Int64Type,
-		Elems: []attr.Value{
-			types.Int64{Value: 99},
-			types.Int64{Value: 100},
-			types.Int64{Value: 101},
+	expectedRegulationsSet := types.SetValueMust(
+		types.Int64Type,
+		[]attr.Value{
+			types.Int64Value(99),
+			types.Int64Value(100),
+			types.Int64Value(101),
 		},
-	}
+	)
 
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{
@@ -84,24 +84,24 @@ func TestProductResourcePopulate(t *testing.T) {
 	var terraformResource terraformResourceData = &productResource
 
 	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
-	assert.Equal(t, productResource.Id.Value, fmt.Sprint(expectedId))
-	assert.Equal(t, productResource.Description.Value, expectedDescription)
-	assert.Equal(t, productResource.Name.Value, expectedName)
-	assert.Equal(t, productResource.Revenue.Value, expectedRevenue)
-	assert.Equal(t, productResource.BusinessCriticality.Value, expectedBusinessCriticality)
-	assert.Equal(t, productResource.Platform.Value, expectedPlatform)
-	assert.Equal(t, productResource.Lifecycle.Value, expectedLifecycle)
-	assert.Equal(t, productResource.Origin.Value, expectedOrigin)
-	assert.Equal(t, productResource.EnableFullRiskAcceptance.Value, expectedEnableFullRiskAcceptance)
-	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, expectedEnableSimpleRiskAcceptance)
-	assert.Equal(t, productResource.ExternalAudience.Value, expectedExternalAudience)
-	assert.Equal(t, productResource.InternetAccessible.Value, expectedInternetAccessible)
-	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(expectedProductTypeId))
-	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(expectedProdNumericGrade))
-	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(expectedProductManagerId))
-	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(expectedTeamManagerId))
-	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(expectedTechnicalContactId))
-	assert.Equal(t, productResource.UserRecords.Value, (int64)(expectedUserRecords))
+	assert.Equal(t, productResource.Id.ValueString(), fmt.Sprint(expectedId))
+	assert.Equal(t, productResource.Description.ValueString(), expectedDescription)
+	assert.Equal(t, productResource.Name.ValueString(), expectedName)
+	assert.Equal(t, productResource.Revenue.ValueString(), expectedRevenue)
+	assert.Equal(t, productResource.BusinessCriticality.ValueString(), expectedBusinessCriticality)
+	assert.Equal(t, productResource.Platform.ValueString(), expectedPlatform)
+	assert.Equal(t, productResource.Lifecycle.ValueString(), expectedLifecycle)
+	assert.Equal(t, productResource.Origin.ValueString(), expectedOrigin)
+	assert.Equal(t, productResource.EnableFullRiskAcceptance.ValueBool(), expectedEnableFullRiskAcceptance)
+	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.ValueBool(), expectedEnableSimpleRiskAcceptance)
+	assert.Equal(t, productResource.ExternalAudience.ValueBool(), expectedExternalAudience)
+	assert.Equal(t, productResource.InternetAccessible.ValueBool(), expectedInternetAccessible)
+	assert.Equal(t, productResource.ProductTypeId.ValueInt64(), (int64)(expectedProductTypeId))
+	assert.Equal(t, productResource.ProdNumericGrade.ValueInt64(), (int64)(expectedProdNumericGrade))
+	assert.Equal(t, productResource.ProductManagerId.ValueInt64(), (int64)(expectedProductManagerId))
+	assert.Equal(t, productResource.TeamManagerId.ValueInt64(), (int64)(expectedTeamManagerId))
+	assert.Equal(t, productResource.TechnicalContactId.ValueInt64(), (int64)(expectedTechnicalContactId))
+	assert.Equal(t, productResource.UserRecords.ValueInt64(), (int64)(expectedUserRecords))
 	assert.DeepEqual(t, productResource.Tags, expectedTagsSet)
 	assert.DeepEqual(t, productResource.RegulationIds, expectedRegulationsSet)
 
@@ -110,59 +110,57 @@ func TestProductResourcePopulate(t *testing.T) {
 	}
 	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
 
-	nilStringSet := types.Set{Null: true, ElemType: types.StringType}
-	nilInt64Set := types.Set{Null: true, ElemType: types.Int64Type}
+	nilStringSet := types.SetNull(types.StringType)
+	nilInt64Set := types.SetNull(types.Int64Type)
 
-	assert.Equal(t, productResource.Description.Value, "")
-	assert.Equal(t, productResource.Name.Value, "")
-	assert.Equal(t, productResource.Revenue.Null, true)
-	assert.Equal(t, productResource.BusinessCriticality.Null, true)
-	assert.Equal(t, productResource.Platform.Null, true)
-	assert.Equal(t, productResource.Lifecycle.Null, true)
-	assert.Equal(t, productResource.Origin.Null, true)
-	assert.Equal(t, productResource.EnableFullRiskAcceptance.Null, true)
-	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Null, true)
-	assert.Equal(t, productResource.ExternalAudience.Null, true)
-	assert.Equal(t, productResource.InternetAccessible.Null, true)
-	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(0))
-	assert.Equal(t, productResource.ProdNumericGrade.Null, true)
-	assert.Equal(t, productResource.ProductManagerId.Null, true)
-	assert.Equal(t, productResource.TeamManagerId.Null, true)
-	assert.Equal(t, productResource.TechnicalContactId.Null, true)
-	assert.Equal(t, productResource.UserRecords.Null, true)
+	assert.Equal(t, productResource.Description.ValueString(), "")
+	assert.Equal(t, productResource.Name.ValueString(), "")
+	assert.Equal(t, productResource.Revenue.IsNull(), true)
+	assert.Equal(t, productResource.BusinessCriticality.IsNull(), true)
+	assert.Equal(t, productResource.Platform.IsNull(), true)
+	assert.Equal(t, productResource.Lifecycle.IsNull(), true)
+	assert.Equal(t, productResource.Origin.IsNull(), true)
+	assert.Equal(t, productResource.EnableFullRiskAcceptance.IsNull(), true)
+	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.IsNull(), true)
+	assert.Equal(t, productResource.ExternalAudience.IsNull(), true)
+	assert.Equal(t, productResource.InternetAccessible.IsNull(), true)
+	assert.Equal(t, productResource.ProductTypeId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.ProdNumericGrade.IsNull(), true)
+	assert.Equal(t, productResource.ProductManagerId.IsNull(), true)
+	assert.Equal(t, productResource.TeamManagerId.IsNull(), true)
+	assert.Equal(t, productResource.TechnicalContactId.IsNull(), true)
+	assert.Equal(t, productResource.UserRecords.IsNull(), true)
 	assert.DeepEqual(t, productResource.Tags, nilStringSet)
 	assert.DeepEqual(t, productResource.RegulationIds, nilInt64Set)
 }
 func TestProductResourcePopulateNils(t *testing.T) {
 
-	nilStringSet := types.Set{Null: true, ElemType: types.StringType}
-	nilInt64Set := types.Set{Null: true, ElemType: types.Int64Type}
-
-	emptyStringSet := types.Set{Elems: []attr.Value{}}
-	emptyInt64Set := types.Set{Elems: []attr.Value{}}
+	nilStringSet := types.SetNull(types.StringType)
+	nilInt64Set := types.SetNull(types.Int64Type)
 
 	productResource := productResourceData{}
 	var terraformResource terraformResourceData = &productResource
 
-	assert.Equal(t, productResource.Description.Value, "")
-	assert.Equal(t, productResource.Name.Value, "")
-	assert.Equal(t, productResource.Revenue.Value, "")
-	assert.Equal(t, productResource.BusinessCriticality.Value, "")
-	assert.Equal(t, productResource.Platform.Value, "")
-	assert.Equal(t, productResource.Lifecycle.Value, "")
-	assert.Equal(t, productResource.Origin.Value, "")
-	assert.Equal(t, productResource.EnableFullRiskAcceptance.Value, false)
-	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, false)
-	assert.Equal(t, productResource.ExternalAudience.Value, false)
-	assert.Equal(t, productResource.InternetAccessible.Value, false)
-	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(0))
-	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(0))
-	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(0))
-	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(0))
-	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(0))
-	assert.Equal(t, productResource.UserRecords.Value, (int64)(0))
-	assert.DeepEqual(t, productResource.Tags, emptyStringSet)
-	assert.DeepEqual(t, productResource.RegulationIds, emptyInt64Set)
+	assert.Equal(t, productResource.Description.ValueString(), "")
+	assert.Equal(t, productResource.Name.ValueString(), "")
+	assert.Equal(t, productResource.Revenue.ValueString(), "")
+	assert.Equal(t, productResource.BusinessCriticality.ValueString(), "")
+	assert.Equal(t, productResource.Platform.ValueString(), "")
+	assert.Equal(t, productResource.Lifecycle.ValueString(), "")
+	assert.Equal(t, productResource.Origin.ValueString(), "")
+	assert.Equal(t, productResource.EnableFullRiskAcceptance.ValueBool(), false)
+	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.ValueBool(), false)
+	assert.Equal(t, productResource.ExternalAudience.ValueBool(), false)
+	assert.Equal(t, productResource.InternetAccessible.ValueBool(), false)
+	assert.Equal(t, productResource.ProductTypeId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.ProdNumericGrade.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.ProductManagerId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.TeamManagerId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.TechnicalContactId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.UserRecords.ValueInt64(), (int64)(0))
+
+	assert.DeepEqual(t, productResource.Tags.Elements(), []attr.Value{})
+	assert.DeepEqual(t, productResource.RegulationIds.Elements(), []attr.Value{})
 
 	ddProduct := productDefectdojoResource{
 		Product: dd.Product{},
@@ -170,23 +168,23 @@ func TestProductResourcePopulateNils(t *testing.T) {
 	populateResourceData(context.Background(), &diag.Diagnostics{}, &terraformResource, &ddProduct)
 
 	// still all empty/null values after running populate
-	assert.Equal(t, productResource.Description.Value, "")
-	assert.Equal(t, productResource.Name.Value, "")
-	assert.Equal(t, productResource.Revenue.Value, "")
-	assert.Equal(t, productResource.BusinessCriticality.Value, "")
-	assert.Equal(t, productResource.Platform.Value, "")
-	assert.Equal(t, productResource.Lifecycle.Value, "")
-	assert.Equal(t, productResource.Origin.Value, "")
-	assert.Equal(t, productResource.EnableFullRiskAcceptance.Value, false)
-	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.Value, false)
-	assert.Equal(t, productResource.ExternalAudience.Value, false)
-	assert.Equal(t, productResource.InternetAccessible.Value, false)
-	assert.Equal(t, productResource.ProductTypeId.Value, (int64)(0))
-	assert.Equal(t, productResource.ProdNumericGrade.Value, (int64)(0))
-	assert.Equal(t, productResource.ProductManagerId.Value, (int64)(0))
-	assert.Equal(t, productResource.TeamManagerId.Value, (int64)(0))
-	assert.Equal(t, productResource.TechnicalContactId.Value, (int64)(0))
-	assert.Equal(t, productResource.UserRecords.Value, (int64)(0))
+	assert.Equal(t, productResource.Description.ValueString(), "")
+	assert.Equal(t, productResource.Name.ValueString(), "")
+	assert.Equal(t, productResource.Revenue.ValueString(), "")
+	assert.Equal(t, productResource.BusinessCriticality.ValueString(), "")
+	assert.Equal(t, productResource.Platform.ValueString(), "")
+	assert.Equal(t, productResource.Lifecycle.ValueString(), "")
+	assert.Equal(t, productResource.Origin.ValueString(), "")
+	assert.Equal(t, productResource.EnableFullRiskAcceptance.ValueBool(), false)
+	assert.Equal(t, productResource.EnableSimpleRiskAcceptance.ValueBool(), false)
+	assert.Equal(t, productResource.ExternalAudience.ValueBool(), false)
+	assert.Equal(t, productResource.InternetAccessible.ValueBool(), false)
+	assert.Equal(t, productResource.ProductTypeId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.ProdNumericGrade.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.ProductManagerId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.TeamManagerId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.TechnicalContactId.ValueInt64(), (int64)(0))
+	assert.Equal(t, productResource.UserRecords.ValueInt64(), (int64)(0))
 	assert.DeepEqual(t, productResource.Tags, nilStringSet)
 	assert.DeepEqual(t, productResource.RegulationIds, nilInt64Set)
 }
@@ -214,47 +212,47 @@ func TestProductResource__defectdojoResource(t *testing.T) {
 	expectedUserRecords := 47
 
 	expectedTags := []string{"foo", "bar", "baz"}
-	expectedTagsSet := types.Set{
-		ElemType: types.StringType,
-		Elems: []attr.Value{
-			types.String{Value: "foo"},
-			types.String{Value: "bar"},
-			types.String{Value: "baz"},
+	expectedTagsSet := types.SetValueMust(
+		types.StringType,
+		[]attr.Value{
+			types.StringValue("foo"),
+			types.StringValue("bar"),
+			types.StringValue("baz"),
 		},
-	}
+	)
 
 	expectedRegulations := []int{99, 100, 101}
 
-	expectedRegulationsSet := types.Set{
-		ElemType: types.Int64Type,
-		Elems: []attr.Value{
-			types.Int64{Value: 99},
-			types.Int64{Value: 100},
-			types.Int64{Value: 101},
+	expectedRegulationsSet := types.SetValueMust(
+		types.Int64Type,
+		[]attr.Value{
+			types.Int64Value(99),
+			types.Int64Value(100),
+			types.Int64Value(101),
 		},
-	}
+	)
 
 	productResource := productResourceData{
 		//Id:                  types.String{Value: fmt.Sprint(expectedId)},
-		Name:                types.String{Value: expectedName},
-		Description:         types.String{Value: expectedDescription},
-		BusinessCriticality: types.String{Value: expectedBusinessCriticality},
-		Platform:            types.String{Value: expectedPlatform},
-		Lifecycle:           types.String{Value: expectedLifecycle},
-		Origin:              types.String{Value: expectedOrigin},
-		Revenue:             types.String{Value: expectedRevenue},
+		Name:                types.StringValue(expectedName),
+		Description:         types.StringValue(expectedDescription),
+		BusinessCriticality: types.StringValue(expectedBusinessCriticality),
+		Platform:            types.StringValue(expectedPlatform),
+		Lifecycle:           types.StringValue(expectedLifecycle),
+		Origin:              types.StringValue(expectedOrigin),
+		Revenue:             types.StringValue(expectedRevenue),
 
-		EnableFullRiskAcceptance:   types.Bool{Value: expectedEnableFullRiskAcceptance},
-		EnableSimpleRiskAcceptance: types.Bool{Value: expectedEnableSimpleRiskAcceptance},
-		ExternalAudience:           types.Bool{Value: expectedExternalAudience},
-		InternetAccessible:         types.Bool{Value: expectedInternetAccessible},
+		EnableFullRiskAcceptance:   types.BoolValue(expectedEnableFullRiskAcceptance),
+		EnableSimpleRiskAcceptance: types.BoolValue(expectedEnableSimpleRiskAcceptance),
+		ExternalAudience:           types.BoolValue(expectedExternalAudience),
+		InternetAccessible:         types.BoolValue(expectedInternetAccessible),
 
-		ProductTypeId:      types.Int64{Value: int64(expectedProductTypeId)},
-		ProdNumericGrade:   types.Int64{Value: int64(expectedProdNumericGrade)},
-		ProductManagerId:   types.Int64{Value: int64(expectedProductManagerId)},
-		TeamManagerId:      types.Int64{Value: int64(expectedTeamManagerId)},
-		TechnicalContactId: types.Int64{Value: int64(expectedTechnicalContactId)},
-		UserRecords:        types.Int64{Value: int64(expectedUserRecords)},
+		ProductTypeId:      types.Int64Value(int64(expectedProductTypeId)),
+		ProdNumericGrade:   types.Int64Value(int64(expectedProdNumericGrade)),
+		ProductManagerId:   types.Int64Value(int64(expectedProductManagerId)),
+		TeamManagerId:      types.Int64Value(int64(expectedTeamManagerId)),
+		TechnicalContactId: types.Int64Value(int64(expectedTechnicalContactId)),
+		UserRecords:        types.Int64Value(int64(expectedUserRecords)),
 
 		Tags:          expectedTagsSet,
 		RegulationIds: expectedRegulationsSet,
@@ -303,29 +301,29 @@ func TestProductResource__defectdojoResource_Nulls(t *testing.T) {
 	// var nilStrings *[]string
 
 	productResource := productResourceData{
-		Id:                  types.String{Null: true},
-		Name:                types.String{Null: true},
-		Description:         types.String{Null: true},
-		BusinessCriticality: types.String{Null: true},
-		Platform:            types.String{Null: true},
-		Lifecycle:           types.String{Null: true},
-		Origin:              types.String{Null: true},
-		Revenue:             types.String{Null: true},
+		Id:                  types.StringNull(),
+		Name:                types.StringNull(),
+		Description:         types.StringNull(),
+		BusinessCriticality: types.StringNull(),
+		Platform:            types.StringNull(),
+		Lifecycle:           types.StringNull(),
+		Origin:              types.StringNull(),
+		Revenue:             types.StringNull(),
 
-		EnableFullRiskAcceptance:   types.Bool{Null: true},
-		EnableSimpleRiskAcceptance: types.Bool{Null: true},
-		ExternalAudience:           types.Bool{Null: true},
-		InternetAccessible:         types.Bool{Null: true},
+		EnableFullRiskAcceptance:   types.BoolNull(),
+		EnableSimpleRiskAcceptance: types.BoolNull(),
+		ExternalAudience:           types.BoolNull(),
+		InternetAccessible:         types.BoolNull(),
 
-		ProductTypeId:      types.Int64{Null: true},
-		ProdNumericGrade:   types.Int64{Null: true},
-		ProductManagerId:   types.Int64{Null: true},
-		TeamManagerId:      types.Int64{Null: true},
-		TechnicalContactId: types.Int64{Null: true},
-		UserRecords:        types.Int64{Null: true},
+		ProductTypeId:      types.Int64Null(),
+		ProdNumericGrade:   types.Int64Null(),
+		ProductManagerId:   types.Int64Null(),
+		TeamManagerId:      types.Int64Null(),
+		TechnicalContactId: types.Int64Null(),
+		UserRecords:        types.Int64Null(),
 
-		Tags:          types.Set{Null: true},
-		RegulationIds: types.Set{Null: true},
+		Tags:          types.SetNull(types.StringType),
+		RegulationIds: types.SetNull(types.Int64Type),
 	}
 
 	ddResource := productResource.defectdojoResource()

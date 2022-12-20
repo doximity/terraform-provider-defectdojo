@@ -5,15 +5,36 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	dd "github.com/doximity/defect-dojo-client-go"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 )
 
 type terraformDatasource struct {
-	provider provider
+	client *dd.ClientWithResponses
 	dataProvider
 }
 
-func (r terraformDatasource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (r *terraformDatasource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*dd.ClientWithResponses)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected dd.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+func (r terraformDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	data, diags := r.getData(ctx, req.Config)
 	resp.Diagnostics.Append(diags...)
 
@@ -21,14 +42,14 @@ func (r terraformDatasource) Read(ctx context.Context, req tfsdk.ReadDataSourceR
 		return
 	}
 
-	if data.id().Null {
+	if data.id().IsNull() {
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
 			"The Id field was null but it is required to retrieve the product")
 		return
 	}
 
-	idNumber, err := strconv.Atoi(data.id().Value)
+	idNumber, err := strconv.Atoi(data.id().ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Could not Retrieve Resource",
@@ -39,7 +60,7 @@ func (r terraformDatasource) Read(ctx context.Context, req tfsdk.ReadDataSourceR
 	ddResource := data.defectdojoResource()
 	populateDefectdojoResource(ctx, &diags, data, &ddResource)
 
-	statusCode, body, err := ddResource.readApiCall(ctx, r.provider, idNumber)
+	statusCode, body, err := ddResource.readApiCall(ctx, r.client, idNumber)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Retrieving Resource",

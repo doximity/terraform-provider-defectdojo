@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -27,27 +27,17 @@ func (m stringDefaultModifier) MarkdownDescription(ctx context.Context) string {
 	return fmt.Sprintf("If value is not configured, defaults to `%s`", m.Default)
 }
 
-// Modify runs the logic of the plan modifier.
+// PlanModifyString runs the logic of the plan modifier.
 // Access to the configuration, plan, and state is available in `req`, while
 // `resp` contains fields for updating the planned value, triggering resource
 // replacement, and returning diagnostics.
-func (m stringDefaultModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	// types.String must be the attr.Value produced by the attr.Type in the schema for this attribute
-	// for generic plan modifiers, use
-	// https://pkg.go.dev/github.com/hashicorp/terraform-plugin-framework/tfsdk#ConvertValue
-	// to convert into a known type.
-	var str types.String
-	diags := tfsdk.ValueAs(ctx, req.AttributePlan, &str)
-	resp.Diagnostics.Append(diags...)
-	if diags.HasError() {
+func (m stringDefaultModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// If the value is unknown or known, do not set default value.
+	if !req.PlanValue.IsNull() {
 		return
 	}
 
-	if !str.Null {
-		return
-	}
-
-	resp.AttributePlan = types.String{Value: m.Default}
+	resp.PlanValue = types.StringValue(m.Default)
 }
 
 func stringDefault(defaultValue string) stringDefaultModifier {
@@ -75,27 +65,17 @@ func (m boolDefaultModifier) MarkdownDescription(ctx context.Context) string {
 	return fmt.Sprintf("If value is not configured, defaults to `%v`", m.Default)
 }
 
-// Modify runs the logic of the plan modifier.
+// PlanModifyBool runs the logic of the plan modifier.
 // Access to the configuration, plan, and state is available in `req`, while
 // `resp` contains fields for updating the planned value, triggering resource
 // replacement, and returning diagnostics.
-func (m boolDefaultModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	// types.Bool must be the attr.Value produced by the attr.Type in the schema for this attribute
-	// for generic plan modifiers, use
-	// https://pkg.go.dev/github.com/hashicorp/terraform-plugin-framework/tfsdk#ConvertValue
-	// to convert into a known type.
-	var b types.Bool
-	diags := tfsdk.ValueAs(ctx, req.AttributePlan, &b)
-	resp.Diagnostics.Append(diags...)
-	if diags.HasError() {
+func (m boolDefaultModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+
+	if !req.PlanValue.IsNull() {
 		return
 	}
 
-	if !b.Null {
-		return
-	}
-
-	resp.AttributePlan = types.Bool{Value: m.Default}
+	resp.PlanValue = types.BoolValue(m.Default)
 }
 
 func boolDefault(defaultValue bool) boolDefaultModifier {

@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	dd "github.com/doximity/defect-dojo-client-go"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// provider satisfies the tfsdk.Provider interface and usually is included
+// DefectDojoProvider satisfies the tfsdk.Provider interface and usually is included
 // with all Resource and DataSource implementations.
-type provider struct {
+type DefectDojoProvider struct {
 	// client can contain the upstream provider SDK or HTTP client used to
 	// communicate with the upstream service. Resource and DataSource
 	// implementations can then make calls using this client.
@@ -31,6 +32,9 @@ type provider struct {
 	// testing.
 	version string
 }
+
+// Ensure ScaffoldingProvider satisfies various provider interfaces.
+var _ provider.Provider = &DefectDojoProvider{}
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
@@ -82,7 +86,7 @@ func newClient(ctx context.Context, url string, token string, user string, pass 
 	return client, nil
 }
 
-func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
+func (p *DefectDojoProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data providerData
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -92,6 +96,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	if p.configured {
+		resp.DataSourceData = p.client
+		resp.ResourceData = p.client
 		return
 	}
 
@@ -102,10 +108,10 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		pass  string
 	)
 
-	if data.BaseUrl.Null {
+	if data.BaseUrl.IsNull() {
 		url = os.Getenv("DEFECTDOJO_BASEURL")
 	} else {
-		url = data.BaseUrl.Value
+		url = data.BaseUrl.ValueString()
 	}
 
 	if url == "" {
@@ -116,20 +122,20 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	if !data.ApiKey.Null {
-		token = data.ApiKey.Value
+	if !data.ApiKey.IsNull() {
+		token = data.ApiKey.ValueString()
 	} else {
 		token = os.Getenv("DEFECTDOJO_APIKEY")
 	}
 
-	if !data.Username.Null {
-		user = data.Username.Value
+	if !data.Username.IsNull() {
+		user = data.Username.ValueString()
 	} else {
 		user = os.Getenv("DEFECTDOJO_USERNAME")
 	}
 
-	if !data.Password.Null {
-		pass = data.Password.Value
+	if !data.Password.IsNull() {
+		pass = data.Password.ValueString()
 	} else {
 		pass = os.Getenv("DEFECTDOJO_PASSWORD")
 	}
@@ -140,96 +146,73 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 			"Unable to configure provider",
 			fmt.Sprintf("%s", err),
 		)
+		p.configured = false
+		p.client = nil
 		return
 	}
 
 	p.client = client
-
 	p.configured = true
+
+	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
-func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
-	return map[string]tfsdk.ResourceType{
-		"defectdojo_jira_product_configuration": jiraProductConfigurationResourceType{},
-		"defectdojo_product":                    productResourceType{},
-		"defectdojo_product_type":               productTypeResourceType{},
-	}, nil
+func (p *DefectDojoProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "defectdojo"
+	resp.Version = p.version
 }
 
-func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
-	return map[string]tfsdk.DataSourceType{
-		"defectdojo_product":      productDataSourceType{},
-		"defectdojo_product_type": productTypeDataSourceType{},
-	}, nil
+func (p *DefectDojoProvider) Resources(ctx context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		NewProductResource,
+		NewProductTypeResource,
+		NewJiraProductConfigurationResource,
+	}
 }
 
-func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"base_url": {
+func (p *DefectDojoProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		NewProductDataSource,
+		NewProductTypeDataSource,
+	}
+
+}
+
+func (p *DefectDojoProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"base_url": schema.StringAttribute{
 				MarkdownDescription: "Base URL of the defectdojo installation",
 				Optional:            true,
 				Required:            false,
-				Type:                types.StringType,
 			},
-			"api_key": {
+			"api_key": schema.StringAttribute{
 				MarkdownDescription: "The API Key used to authenticate to defectdojo",
 				Optional:            true,
 				Required:            false,
-				Type:                types.StringType,
 				Sensitive:           true,
 			},
-			"username": {
+			"username": schema.StringAttribute{
 				MarkdownDescription: "The username used to authenticate to defectdojo. Has no effect if api_key is set.",
 				Optional:            true,
 				Required:            false,
-				Type:                types.StringType,
 				Sensitive:           true,
 			},
-			"password": {
+			"password": schema.StringAttribute{
 				MarkdownDescription: "The password used to authenticate to defectdojo. Has no effect if api_key is set.",
 				Optional:            true,
 				Required:            false,
-				Type:                types.StringType,
 				Sensitive:           true,
 			},
 		},
-	}, nil
+	}
 }
 
-func New(version string) func() tfsdk.Provider {
-	return func() tfsdk.Provider {
-		return &provider{
+func New(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &DefectDojoProvider{
 			version: version,
 		}
 	}
-}
-
-// convertProviderType is a helper function for NewResource and NewDataSource
-// implementations to associate the concrete provider type. Alternatively,
-// this helper can be skipped and the provider type can be directly type
-// asserted (e.g. provider: in.(*provider)), however using this can prevent
-// potential panics.
-func convertProviderType(in tfsdk.Provider) (provider, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	p, ok := in.(*provider)
-
-	if !ok {
-		diags.AddError(
-			"Unexpected Provider Instance Type",
-			fmt.Sprintf("While creating the data source or resource, an unexpected provider type (%T) was received. This is always a bug in the provider code and should be reported to the provider developers.", p),
-		)
-		return provider{}, diags
-	}
-
-	if p == nil {
-		diags.AddError(
-			"Unexpected Provider Instance Type",
-			"While creating the data source or resource, an unexpected empty provider instance was received. This is always a bug in the provider code and should be reported to the provider developers.",
-		)
-		return provider{}, diags
-	}
-
-	return *p, diags
 }
