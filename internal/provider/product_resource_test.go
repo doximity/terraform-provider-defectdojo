@@ -30,7 +30,7 @@ func TestAccProductBaseResource(t *testing.T) {
 					resource.TestCheckResourceAttr("defectdojo_product.test", "enable_skip_risk_acceptance", "true"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "external_audience", "true"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "internet_accessible", "true"),
-					resource.TestCheckResourceAttr("defectdojo_product.test", "lifecycle", "production"),
+					resource.TestCheckResourceAttr("defectdojo_product.test", "life_cycle", "production"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "origin", "internal"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "platform", "web"),
 					resource.TestCheckResourceAttr("defectdojo_product.test", "prod_numeric_grade", "100"),
@@ -57,7 +57,7 @@ func TestAccProductBaseResource(t *testing.T) {
 					resource.TestCheckResourceAttr("defectdojo_product.test", "regulation_ids.#", "0"),
 
 					resource.TestCheckNoResourceAttr("defectdojo_product.test", "business_criticality"),
-					resource.TestCheckNoResourceAttr("defectdojo_product.test", "lifecycle"),
+					resource.TestCheckNoResourceAttr("defectdojo_product.test", "life_cycle"),
 					resource.TestCheckNoResourceAttr("defectdojo_product.test", "origin"),
 					resource.TestCheckNoResourceAttr("defectdojo_product.test", "platform"),
 					resource.TestCheckNoResourceAttr("defectdojo_product.test", "prod_numeric_grade"),
@@ -213,7 +213,7 @@ resource "defectdojo_product" "test" {
   enable_skip_risk_acceptance = true
   external_audience = true
   internet_accessible = true
-  lifecycle = "production"
+  life_cycle = "production"
   origin = "internal"
   platform = "web"
   prod_numeric_grade = 100
@@ -240,7 +240,7 @@ resource "defectdojo_product" "test" {
   enable_skip_risk_acceptance = true
   external_audience = true
   internet_accessible = true
-  lifecycle = "production"
+  life_cycle = "production"
   origin = "internal"
   platform = "web"
   prod_numeric_grade = 100
@@ -269,7 +269,7 @@ resource "defectdojo_product" "test" {
   enable_skip_risk_acceptance = true
   external_audience = true
   internet_accessible = true
-  lifecycle = "production"
+  life_cycle = "production"
   origin = "internal"
   platform = "web"
   prod_numeric_grade = 100

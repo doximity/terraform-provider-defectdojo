@@ -3,138 +3,118 @@ package provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type productDataSourceType struct{}
+type productDataSource struct {
+	terraformDatasource
+}
 
-func (t productDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (t productDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Data source for Defect Dojo Product",
 
-		Attributes: map[string]tfsdk.Attribute{
-			"name": {
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{
 				MarkdownDescription: "The name of the Product",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"description": {
+			"description": schema.StringAttribute{
 				MarkdownDescription: "The description of the Product",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"product_type_id": {
+			"product_type_id": schema.Int64Attribute{
 				MarkdownDescription: "The ID of the Product Type",
 				Computed:            true,
-				Type:                types.Int64Type,
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier",
-				Type:                types.StringType,
 				Optional:            true,
 			},
-			"prod_numeric_grade": {
+			"prod_numeric_grade": schema.Int64Attribute{
 				MarkdownDescription: "The Numeric Grade of the Product",
 				Optional:            true,
-				Type:                types.Int64Type,
 			},
-			"business_criticality": {
+			"business_criticality": schema.StringAttribute{
 				MarkdownDescription: "The Business Criticality of the Product. Valid values are: 'very high', 'high', 'medium', 'low', 'very low', 'none'",
 				Optional:            true,
-				Type:                types.StringType,
 			},
-			"platform": {
+			"platform": schema.StringAttribute{
 				MarkdownDescription: "The Platform of the Product. Valid values are: 'web service', 'desktop', 'iot', 'mobile', 'web'",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"lifecycle": {
+			"life_cycle": schema.StringAttribute{
 				MarkdownDescription: "The Lifecycle state of the Product. Valid values are: 'construction', 'production', 'retirement'",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"origin": {
+			"origin": schema.StringAttribute{
 				MarkdownDescription: "The Origin of the Product. Valid values are: 'third party library', 'purchased', 'contractor', 'internal', 'open source', 'outsourced'",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"user_records": {
+			"user_records": schema.Int64Attribute{
 				MarkdownDescription: "Estimate the number of user records within the application.",
 				Computed:            true,
-				Type:                types.Int64Type,
 			},
-			"revenue": {
+			"revenue": schema.StringAttribute{
 				MarkdownDescription: "Estimate the application's revenue.",
 				Computed:            true,
-				Type:                types.StringType,
 			},
-			"external_audience": {
+			"external_audience": schema.BoolAttribute{
 				MarkdownDescription: "Specify if the application is used by people outside the organization.",
-				Type:                types.BoolType,
 				Computed:            true,
 			},
-			"internet_accessible": {
+			"internet_accessible": schema.BoolAttribute{
 				MarkdownDescription: "Specify if the application is accessible from the public internet.",
-				Type:                types.BoolType,
 				Computed:            true,
 			},
-			"enable_skip_risk_acceptance": {
+			"enable_skip_risk_acceptance": schema.BoolAttribute{
 				MarkdownDescription: "Allows simple risk acceptance by checking/unchecking a checkbox.",
-				Type:                types.BoolType,
 				Computed:            true,
 			},
-			"enable_full_risk_acceptance": {
+			"enable_full_risk_acceptance": schema.BoolAttribute{
 				MarkdownDescription: "Allows full risk acceptance using a risk acceptance form, expiration date, uploaded proof, etc.",
-				Type:                types.BoolType,
 				Computed:            true,
 			},
-			"product_manager_id": {
+			"product_manager_id": schema.Int64Attribute{
 				MarkdownDescription: "The ID of the user who is the PM for this product.",
 				Computed:            true,
-				Type:                types.Int64Type,
 			},
-			"technical_contact_id": {
+			"technical_contact_id": schema.Int64Attribute{
 				MarkdownDescription: "The ID of the user who is the technical contact for this product.",
 				Computed:            true,
-				Type:                types.Int64Type,
 			},
-			"team_manager_id": {
+			"team_manager_id": schema.Int64Attribute{
 				MarkdownDescription: "The ID of the user who is the manager for this product.",
 				Computed:            true,
-				Type:                types.Int64Type,
 			},
-			"regulation_ids": {
+			"regulation_ids": schema.SetAttribute{
 				MarkdownDescription: "The IDs of the Regulations which apply to this product.",
 				Computed:            true,
-				Type: types.SetType{
-					ElemType: types.Int64Type,
-				},
+				ElementType:         types.Int64Type,
 			},
-			"tags": {
+			"tags": schema.SetAttribute{
 				MarkdownDescription: "Tags to apply to the product",
 				Computed:            true,
-				Type: types.SetType{
-					ElemType: types.StringType,
-				},
+				ElementType:         types.StringType,
 			},
 		},
-	}, nil
+	}
 }
 
-func (t productDataSourceType) NewDataSource(ctx context.Context, in tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
-	provider, diags := convertProviderType(in)
+func (d productDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_product"
+}
 
-	return productDataSource{
+// Ensure the implementation satisfies the desired interfaces.
+var _ datasource.DataSource = &productDataSource{}
+
+func NewProductDataSource() datasource.DataSource {
+	return &productDataSource{
 		terraformDatasource: terraformDatasource{
-			provider:     provider,
 			dataProvider: productDataProvider{},
 		},
-	}, diags
-}
-
-type productDataSource struct {
-	terraformDatasource
+	}
 }
