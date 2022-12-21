@@ -34,7 +34,7 @@ data "defectdojo_product" "example" {
 - `enable_skip_risk_acceptance` (Boolean) Allows simple risk acceptance by checking/unchecking a checkbox.
 - `external_audience` (Boolean) Specify if the application is used by people outside the organization.
 - `internet_accessible` (Boolean) Specify if the application is accessible from the public internet.
-- `lifecycle` (String) The Lifecycle state of the Product. Valid values are: 'construction', 'production', 'retirement'
+- `life_cycle` (String) The Lifecycle state of the Product. Valid values are: 'construction', 'production', 'retirement'
 - `name` (String) The name of the Product
 - `origin` (String) The Origin of the Product. Valid values are: 'third party library', 'purchased', 'contractor', 'internal', 'open source', 'outsourced'
 - `platform` (String) The Platform of the Product. Valid values are: 'web service', 'desktop', 'iot', 'mobile', 'web'
