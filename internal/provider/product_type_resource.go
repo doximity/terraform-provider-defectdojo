@@ -60,8 +60,8 @@ func (t productTypeResource) Schema(ctx context.Context, req resource.SchemaRequ
 type productTypeResourceData struct {
 	Name            types.String `tfsdk:"name" ddField:"Name"`
 	Description     types.String `tfsdk:"description" ddField:"Description"`
-	CriticalProduct types.Bool   `tfsdk:"critical_product" ddField:"Critical Product"`
-	KeyProduct      types.Bool   `tfsdk:"key_product" ddField:"Key Product"`
+	CriticalProduct types.Bool   `tfsdk:"critical_product" ddField:"CriticalProduct"`
+	KeyProduct      types.Bool   `tfsdk:"key_product" ddField:"KeyProduct"`
 	Id              types.String `tfsdk:"id" ddField:"Id"`
 }
 
