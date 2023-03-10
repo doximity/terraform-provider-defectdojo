@@ -30,6 +30,22 @@ func (t productTypeResource) Schema(ctx context.Context, req resource.SchemaRequ
 					stringDefault(""),
 				},
 			},
+			"critical_product": schema.BoolAttribute{
+				MarkdownDescription: "Is this a critical Product Type",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolDefault(false),
+				},
+			},
+			"key_product": schema.BoolAttribute{
+				MarkdownDescription: "Is this a key Product Type",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolDefault(false),
+				},
+			},
 			"id": schema.StringAttribute{ // the id (for import purposes) MUST be a string
 				Computed:            true,
 				MarkdownDescription: "Identifier",
@@ -42,9 +58,11 @@ func (t productTypeResource) Schema(ctx context.Context, req resource.SchemaRequ
 }
 
 type productTypeResourceData struct {
-	Name        types.String `tfsdk:"name" ddField:"Name"`
-	Description types.String `tfsdk:"description" ddField:"Description"`
-	Id          types.String `tfsdk:"id" ddField:"Id"`
+	Name            types.String `tfsdk:"name" ddField:"Name"`
+	Description     types.String `tfsdk:"description" ddField:"Description"`
+	CriticalProduct types.Bool   `tfsdk:"critical_product" ddField:"Critical Product"`
+	KeyProduct      types.Bool   `tfsdk:"key_product" ddField:"Key Product"`
+	Id              types.String `tfsdk:"id" ddField:"Id"`
 }
 
 type productTypeDefectdojoResource struct {

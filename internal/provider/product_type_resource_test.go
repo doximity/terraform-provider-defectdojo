@@ -22,6 +22,8 @@ func TestAccProductTypeResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "name", name),
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "description", desc),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "critical_product", "true"),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "key_product", "true"),
 				),
 			},
 			// ImportState testing
@@ -36,6 +38,8 @@ func TestAccProductTypeResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "name", updatedName),
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "description", updatedDesc),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "critical_product", "false"),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "key_product", "false"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -49,6 +53,8 @@ provider "defectdojo" {}
 resource "defectdojo_product_type" "test" {
   name = %[1]q
   description = %[2]q
+  critical_product = true
+  key_product = true
 }
 `, name, desc)
 }

@@ -14,8 +14,10 @@ DefectDojo Product Type
 
 ```terraform
 resource "defectdojo_product_type" "example" {
-  name        = "An example name"
-  description = "An example description"
+  name             = "An example name"
+  description      = "An example description"
+  critical_product = false
+  key_product      = false
 }
 ```
 
@@ -28,7 +30,9 @@ resource "defectdojo_product_type" "example" {
 
 ### Optional
 
+- `critical_product` (Boolean) Is this a critical Product Type
 - `description` (String) The description of the Product Type
+- `key_product` (Boolean) Is this a key Product Type
 
 ### Read-Only
 

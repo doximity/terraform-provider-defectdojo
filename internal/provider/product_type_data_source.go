@@ -27,6 +27,14 @@ func (t productTypeDataSource) Schema(ctx context.Context, req datasource.Schema
 				MarkdownDescription: "The description of the Product Type",
 				Computed:            true,
 			},
+			"critical_product": schema.BoolAttribute{
+				MarkdownDescription: "Is this a critical Product Type",
+				Computed:            true,
+			},
+			"key_product": schema.BoolAttribute{
+				MarkdownDescription: "Is this a key Product Type",
+				Computed:            true,
+			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier",
 				Optional:            true,
@@ -36,9 +44,11 @@ func (t productTypeDataSource) Schema(ctx context.Context, req datasource.Schema
 }
 
 type productTypeDataSourceData struct {
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
+	Name            types.String `tfsdk:"name"`
+	Description     types.String `tfsdk:"description"`
+	CriticalProduct types.Bool   `tfsdk:"critical_product"`
+	KeyProduct      types.Bool   `tfsdk:"key_product"`
+	Id              types.String `tfsdk:"id"`
 }
 
 type productTypeDataSource struct {
