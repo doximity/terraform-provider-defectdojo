@@ -38,8 +38,8 @@ func TestAccProductTypeResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "name", updatedName),
 					resource.TestCheckResourceAttr("defectdojo_product_type.test", "description", updatedDesc),
-					resource.TestCheckResourceAttr("defectdojo_product_type.test", "critical_product", "false"),
-					resource.TestCheckResourceAttr("defectdojo_product_type.test", "key_product", "false"),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "critical_product", "true"),
+					resource.TestCheckResourceAttr("defectdojo_product_type.test", "key_product", "true"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

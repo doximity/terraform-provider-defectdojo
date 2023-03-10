@@ -19,8 +19,6 @@ func TestAccProductTypeIdDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "name", name),
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "description", "test"),
-					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "critical_product", "true"),
-					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "key_product", "true"),
 				),
 			},
 		},
@@ -39,8 +37,6 @@ func TestAccProductTypeNameDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "name", name),
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "description", "test"),
-					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "critical_product", "true"),
-					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "key_product", "true"),
 				),
 			},
 		},
@@ -53,8 +49,6 @@ provider "defectdojo" {}
 resource "defectdojo_product_type" "test" {
 	name = %[1]q
 	description = "test"
-	critical_product = true
-	key_product = true
 }
 data "defectdojo_product_type" "test" {
 	id = defectdojo_product_type.test.id
@@ -69,8 +63,6 @@ provider "defectdojo" {}
 resource "defectdojo_product_type" "test" {
 	name = %[1]q
 	description = "test"
-	critical_product = true
-	key_product = true
 }
 data "defectdojo_product_type" "test" {
 	name = %[2]q
