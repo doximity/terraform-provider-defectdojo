@@ -43,6 +43,40 @@ func TestAccProductTypeNameDataSource(t *testing.T) {
 	})
 }
 
+func TestAccProductTypeCriticalAndKeyChecksDataSource(t *testing.T) {
+	name := fmt.Sprintf("dox-test-repo-%s", resource.UniqueId())
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create resource for testing datasource
+			{
+				Config: testAccProductTypeCriticalAndKeyChecksConfig(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "name", name),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "description", "test"),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "critical_product", "false"),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "key_product", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccProductTypeCriticalAndKeyChecksConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_product_type" "test" {
+	name = %[1]q
+	description = "test"
+}
+data "defectdojo_product_type" "test" {
+	name = %[1]q
+	depends_on = [defectdojo_product_type.test]
+}
+`, name)
+}
+
 func testAccProductTypeDataSourceIdConfig(name string) string {
 	return fmt.Sprintf(`
 provider "defectdojo" {}

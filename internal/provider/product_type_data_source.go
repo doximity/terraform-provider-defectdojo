@@ -138,6 +138,8 @@ func (d productTypeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			data.Id = types.StringValue(fmt.Sprintf("%d", pt.Id))
 			data.Name = types.StringValue(pt.Name)
 			data.Description = types.StringValue(*pt.Description)
+			data.CriticalProduct = types.BoolValue(*pt.CriticalProduct)
+			data.KeyProduct = types.BoolValue(*pt.KeyProduct)
 		}
 	} else {
 		body, _ := ioutil.ReadAll(apiResp.HTTPResponse.Body)
