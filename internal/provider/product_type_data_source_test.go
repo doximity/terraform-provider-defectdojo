@@ -43,15 +43,15 @@ func TestAccProductTypeNameDataSource(t *testing.T) {
 	})
 }
 
-func TestAccProductTypeCriticalAndKeyChecksDataSource(t *testing.T) {
+func TestAccProductTypeBooleansDataSource(t *testing.T) {
 	name := fmt.Sprintf("dox-test-repo-%s", resource.UniqueId())
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create resource for testing datasource
+			// Test default values of our booleans
 			{
-				Config: testAccProductTypeCriticalAndKeyChecksConfig(name),
+				Config: testAccProductTypeBooleanChecksDefaultConfig(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "name", name),
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "description", "test"),
@@ -59,22 +59,18 @@ func TestAccProductTypeCriticalAndKeyChecksDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "key_product", "false"),
 				),
 			},
+			// Test our booleans when defined as true
+			{
+				Config: testAccProductTypeBooleanChecksConfig(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "name", name),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "description", "test"),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "critical_product", "true"),
+					resource.TestCheckResourceAttr("data.defectdojo_product_type.test", "key_product", "true"),
+				),
+			},
 		},
 	})
-}
-
-func testAccProductTypeCriticalAndKeyChecksConfig(name string) string {
-	return fmt.Sprintf(`
-provider "defectdojo" {}
-resource "defectdojo_product_type" "test" {
-	name = %[1]q
-	description = "test"
-}
-data "defectdojo_product_type" "test" {
-	name = %[1]q
-	depends_on = [defectdojo_product_type.test]
-}
-`, name)
 }
 
 func testAccProductTypeDataSourceIdConfig(name string) string {
@@ -103,4 +99,34 @@ data "defectdojo_product_type" "test" {
 	depends_on = [defectdojo_product_type.test]
 }
 `, name, name)
+}
+
+func testAccProductTypeBooleanChecksDefaultConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_product_type" "test" {
+	name = %[1]q
+	description = "test"
+}
+data "defectdojo_product_type" "test" {
+	name = %[1]q
+	depends_on = [defectdojo_product_type.test]
+}
+`, name)
+}
+
+func testAccProductTypeBooleanChecksConfig(name string) string {
+	return fmt.Sprintf(`
+provider "defectdojo" {}
+resource "defectdojo_product_type" "test" {
+	name = %[1]q
+	description = "test"
+	critical_product = true
+	key_product = true
+}
+data "defectdojo_product_type" "test" {
+	name = %[1]q
+	depends_on = [defectdojo_product_type.test]
+}
+`, name)
 }
