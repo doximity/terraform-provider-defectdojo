@@ -1,3 +1,10 @@
+## 0.0.13
+
+FEATURES
+  - Add two attributes to `defectdojo_product_type` resource and data source:
+    - `critical_product`
+    - `key_product`
+
 ## 0.0.12
 
 BUGFIX:
