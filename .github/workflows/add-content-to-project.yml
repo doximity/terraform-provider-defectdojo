@@ -16,7 +16,7 @@ on:
 jobs:
   add-content-to-project:
     name: "Add Content to project"
-    runs-on: ubuntu-latest
+    runs-on: general-purpose
     steps:
       - name: "Set Issue to 'Priority = Triage Next'"
         uses: leonsteinhaeuser/project-beta-automations@v1.2.1
