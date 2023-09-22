@@ -1,4 +1,4 @@
-* @doximity/infra_security_reviewers @doximity/application_security_reviewers
+* @doximity/application_security_reviewers
 
 # Infra Automation
 /.github/workflows @doximity/infra_automation_reviewers
